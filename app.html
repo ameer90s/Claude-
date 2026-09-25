@@ -2,33 +2,22 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#667eea">
-    <meta name="description" content="مساعد تداول يومي متقدم - توصيات تلقائية وتنبيهات فورية">
+    <meta name="description" content="مساعد تداول ذكي - توصيات حقيقية مع Finnhub API">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Scalping">
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23667eea' width='192' height='192'/><text x='96' y='96' font-size='60' fill='%23fff' text-anchor='middle' dy='.3em'>🎯</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23667eea' width='180' height='180'/><text x='90' y='90' font-size='60' fill='%23fff' text-anchor='middle' dy='.3em'>🎯</text></svg>">
-    <title>Scalping Assistant - المساعد الذكي للتداول</title>
+    <title>Scalping Assistant - High Probability Trader</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow-x: hidden;
-        }
         
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 10px;
             padding-top: max(10px, env(safe-area-inset-top));
-            padding-bottom: max(10px, env(safe-area-inset-bottom));
-            padding-left: max(10px, env(safe-area-inset-left));
-            padding-right: max(10px, env(safe-area-inset-right));
         }
         
         .container {
@@ -37,7 +26,6 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 12px;
-            height: 100%;
         }
         
         .main {
@@ -53,8 +41,7 @@
             text-align: center;
             margin-bottom: 15px;
             color: #333;
-            font-size: 1.5em;
-            word-break: break-word;
+            font-size: 1.4em;
         }
         
         .api-setup {
@@ -63,13 +50,10 @@
             padding: 12px;
             margin-bottom: 12px;
             border-radius: 5px;
-            color: #333;
             position: relative;
         }
         
-        .api-setup.collapsed {
-            display: none;
-        }
+        .api-setup.collapsed { display: none; }
         
         .api-close {
             position: absolute;
@@ -82,7 +66,6 @@
             border-radius: 3px;
             cursor: pointer;
             font-weight: bold;
-            color: black;
         }
         
         .api-setup input {
@@ -132,7 +115,6 @@
             border: 2px solid #ddd;
             border-radius: 5px;
             font-size: 0.9em;
-            color: #333;
         }
         
         .buttons {
@@ -148,28 +130,23 @@
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 0.95em;
             color: white;
-            transition: all 0.3s;
-            text-align: center;
         }
         
         .btn-start {
             background: #27ae60;
         }
         
-        .btn-start:hover, .btn-start:active {
+        .btn-start:hover {
             background: #229954;
-            transform: translateY(-2px);
         }
         
         .btn-stop {
             background: #e74c3c;
         }
         
-        .btn-stop:hover, .btn-stop:active {
+        .btn-stop:hover {
             background: #c0392b;
-            transform: translateY(-2px);
         }
         
         .status {
@@ -190,7 +167,6 @@
         
         .status > div {
             margin: 4px 0;
-            color: inherit;
         }
         
         .price-grid {
@@ -205,7 +181,6 @@
             padding: 12px;
             border-radius: 8px;
             border: 2px solid #e0e0e0;
-            color: #333;
         }
         
         .price-card h3 {
@@ -227,7 +202,6 @@
             padding: 4px;
             background: white;
             border-radius: 3px;
-            color: #333;
         }
         
         .label {
@@ -260,119 +234,13 @@
             color: #721c24;
         }
         
-        .sidebar-tabs {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-        
-        .tab-btn {
-            background: #f0f0f0;
-            color: #333;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.85em;
-        }
-        
-        .tab-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        
-        .sidebar-card {
-            background: white;
-            padding: 12px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            color: #333;
-            display: none;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .sidebar-card.active {
-            display: block;
-        }
-        
-        .sidebar-card h3 {
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #667eea;
-            color: #333;
-            font-size: 0.95em;
-        }
-        
-        .checklist {
-            list-style: none;
-        }
-        
-        .checklist li {
-            padding: 8px;
-            margin: 4px 0;
-            background: #d4edda;
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            color: #155724;
-            font-size: 0.85em;
-            border-left: 3px solid #28a745;
-        }
-        
-        .checklist li span {
-            margin-right: 8px;
-        }
-        
-        .checklist-progress {
-            width: 100%;
-            height: 6px;
-            background: #e0e0e0;
-            border-radius: 3px;
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-        
-        .checklist-progress-bar {
-            height: 100%;
-            background: #28a745;
-            width: 0%;
-            transition: width 0.3s;
-        }
-        
-        .strategy-rules {
-            background: #ecf0f1;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 0.8em;
-            line-height: 1.6;
-            color: #333;
-        }
-        
-        .rule {
-            margin: 5px 0;
-            padding: 4px;
-        }
-        
-        .rule.good { color: #27ae60; }
-        .rule.warning { color: #e67e22; }
-        .rule.bad { color: #e74c3c; }
-        
-        .recommendations {
-            display: grid;
-            gap: 10px;
-        }
-        
         .rec-card {
             background: white;
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             border-left: 4px solid #667eea;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            color: #333;
+            margin-bottom: 10px;
         }
         
         .rec-header {
@@ -383,14 +251,22 @@
         }
         
         .rec-symbol {
-            font-size: 1em;
+            font-size: 1.1em;
             font-weight: bold;
             color: #667eea;
         }
         
-        .rec-confidence {
-            font-size: 0.75em;
+        .rec-strategy {
+            font-size: 0.7em;
             background: #667eea;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .rec-confidence {
+            font-size: 0.7em;
+            background: #27ae60;
             color: white;
             padding: 2px 6px;
             border-radius: 3px;
@@ -416,7 +292,6 @@
         
         .rec-value {
             font-weight: bold;
-            color: #2c3e50;
             text-align: right;
             font-size: 0.8em;
         }
@@ -429,45 +304,44 @@
             text-align: center;
             color: #999;
             padding: 15px;
+        }
+        
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .tab-btn {
+            background: #f0f0f0;
+            color: #333;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
             font-size: 0.85em;
         }
         
-        .notification-badge {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: #e74c3c;
+        .tab-btn.active {
+            background: #667eea;
             color: white;
-            padding: 10px 15px;
-            border-radius: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 1000;
-            animation: slideUp 0.3s ease-out;
+            border-color: #667eea;
         }
         
-        @keyframes slideUp {
-            from {
-                transform: translateY(100px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+        .tab-content {
+            display: none;
         }
         
-        @media (max-width: 768px) {
-            .price-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            h1 {
-                font-size: 1.3em;
-            }
-            
-            .controls {
-                grid-template-columns: 1fr;
-            }
+        .tab-content.active {
+            display: block;
+        }
+        
+        .data-source {
+            font-size: 0.75em;
+            color: #27ae60;
+            margin-top: 5px;
         }
     </style>
 </head>
@@ -478,10 +352,13 @@
             
             <div class="api-setup" id="apiSetup">
                 <button class="api-close" onclick="closeAPISetup()">✕</button>
-                <div style="font-size: 0.85em; margin-bottom: 8px; color: #333;">
-                    <strong>Finnhub API</strong>
+                <div style="font-size: 0.85em; margin-bottom: 8px;">
+                    <strong>Finnhub API (اختياري)</strong>
+                    <div style="font-size: 0.75em; color: #666; margin-top: 4px;">
+                        الأسعار الحقيقية - 60 طلب/دقيقة (مجاني)
+                    </div>
                 </div>
-                <input type="text" id="apiKey" placeholder="API Key (اختياري)" />
+                <input type="text" id="apiKey" placeholder="API Key من finnhub.io" />
                 <button onclick="saveAPIKey()">💾 حفظ</button>
             </div>
             
@@ -499,7 +376,6 @@
                         <option value="60">1H</option>
                         <option value="30">30M</option>
                         <option value="15">15M</option>
-                        <option value="5">5M</option>
                     </select>
                 </div>
                 <div class="control">
@@ -520,6 +396,7 @@
             <div class="status" id="status">
                 <div><strong>الحالة:</strong> <span id="statusText">⚫ متوقفة</span></div>
                 <div><strong>التحديث:</strong> <span id="lastUpdate">-</span></div>
+                <div id="dataSource" class="data-source">📊 محاكاة واقعية</div>
             </div>
             
             <div class="price-grid">
@@ -578,59 +455,50 @@
                 </div>
             </div>
             
-            <div class="sidebar-tabs">
-                <button class="tab-btn active" onclick="switchTab('checklist')">✅ Checklist</button>
-                <button class="tab-btn" onclick="switchTab('strategy')">📋 استراتيجية</button>
-                <button class="tab-btn" onclick="switchTab('recommendations')">🚀 توصيات</button>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('recommendations')">🚀 توصيات</button>
+                <button class="tab-btn" onclick="switchTab('checklist')">✅ Checklist</button>
+                <button class="tab-btn" onclick="switchTab('strategy')">📋 الاستراتيجية</button>
             </div>
             
-            <div class="sidebar-card active" id="checklistTab">
-                <h3>✅ Pre-Trade Checklist</h3>
-                <div class="checklist-progress">
-                    <div class="checklist-progress-bar" id="progressBar"></div>
-                </div>
-                <ul class="checklist" id="checklist"></ul>
-            </div>
-            
-            <div class="sidebar-card" id="strategyTab">
-                <h3>📋 High-Probability Scalping</h3>
-                <div class="strategy-rules">
-                    <div class="rule good">✅ Entry: MA9 Cross</div>
-                    <div class="rule good">✅ TP1: +0.5%</div>
-                    <div class="rule good">✅ TP2: +0.8%</div>
-                    <div class="rule bad">❌ SL: -0.3%</div>
-                    <div class="rule warning">⚠️ Max 5/يوم</div>
-                    <div class="rule warning">⚠️ Max 2 ساعة</div>
-                    <div class="rule good">✅ W/R: 75%</div>
-                    <div class="rule good">✅ R:R: 1:2</div>
-                </div>
-            </div>
-            
-            <div class="sidebar-card" id="recommendationsTab">
-                <h3>🚀 التوصيات الحالية</h3>
-                <div class="recommendations" id="recommendationsList">
+            <div id="recommendationsTab" class="tab-content active">
+                <h3 style="margin-bottom: 10px; color: #333;">التوصيات الحالية</h3>
+                <div id="recommendationsList">
                     <div class="no-recs">انتظر التحليل...</div>
+                </div>
+            </div>
+            
+            <div id="checklistTab" class="tab-content">
+                <h3 style="margin-bottom: 10px; color: #333;">Pre-Trade Checklist</h3>
+                <div style="height: 6px; background: #e0e0e0; border-radius: 3px; margin-bottom: 10px;">
+                    <div id="progressBar" style="height: 100%; background: #28a745; width: 100%; border-radius: 3px;"></div>
+                </div>
+                <ul id="checklist" style="list-style: none;"></ul>
+            </div>
+            
+            <div id="strategyTab" class="tab-content">
+                <h3 style="margin-bottom: 10px; color: #333;">High-Probability Scalping</h3>
+                <div style="background: #ecf0f1; padding: 12px; border-radius: 5px; font-size: 0.85em; line-height: 1.8;">
+                    <div style="color: #27ae60; margin: 6px 0;">✅ Entry: MA9 Cross</div>
+                    <div style="color: #27ae60; margin: 6px 0;">✅ TP1: +0.5%</div>
+                    <div style="color: #27ae60; margin: 6px 0;">✅ TP2: +0.8%</div>
+                    <div style="color: #e74c3c; margin: 6px 0;">❌ SL: -0.3%</div>
+                    <div style="color: #e67e22; margin: 6px 0;">⚠️ Max 5 صفقات</div>
+                    <div style="color: #e67e22; margin: 6px 0;">⚠️ Max 2 ساعة</div>
+                    <div style="color: #27ae60; margin: 6px 0;">✅ W/R: 75%</div>
+                    <div style="color: #27ae60; margin: 6px 0;">✅ R:R: 1:2</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('SW registered'))
-                .catch(err => console.log('SW registration failed:', err));
-        }
-        
-        // Request notifications permission
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
-        }
-        
+        // ===== إعدادات عامة =====
         let finnhubApiKey = localStorage.getItem('finnhubApiKey') || '';
         let isMonitoring = false;
         let monitoringInterval;
+        let lastFinnhubFetch = 0;
+        const FINNHUB_INTERVAL = 2000; // 2 ثانية بين الطلبات (30 طلب/دقيقة)
         const recommendations = [];
         
         const basePrices = {
@@ -651,12 +519,14 @@
             'تركيز كامل'
         ];
         
-        class RealisticPriceSimulator {
+        // ===== محاكاة الأسعار الواقعية =====
+        class PriceSimulator {
             constructor(symbol) {
                 this.symbol = symbol;
                 this.basePrice = basePrices[symbol];
                 this.price = this.basePrice;
                 this.history = [];
+                this.lastFinnhubPrice = this.basePrice;
                 
                 for (let i = 0; i < 50; i++) {
                     this.history.push(this.basePrice * (0.995 + Math.random() * 0.01));
@@ -673,6 +543,14 @@
                 this.history.push(this.price);
                 
                 if (this.history.length > 100) this.history.shift();
+            }
+            
+            applyFinnhubPrice(price) {
+                if (price && price > 0) {
+                    this.lastFinnhubPrice = price;
+                    this.price = price;
+                    this.history[this.history.length - 1] = price;
+                }
             }
             
             getMA(period) {
@@ -702,10 +580,46 @@
         }
         
         const simulators = {
-            'OKLO': new RealisticPriceSimulator('OKLO'),
-            'TSLA': new RealisticPriceSimulator('TSLA')
+            'OKLO': new PriceSimulator('OKLO'),
+            'TSLA': new PriceSimulator('TSLA')
         };
         
+        // ===== Finnhub API الذكي =====
+        async function fetchFromFinnhub(symbol) {
+            if (!finnhubApiKey) return null;
+            
+            const now = Date.now();
+            if (now - lastFinnhubFetch < FINNHUB_INTERVAL) {
+                return null; // لا نطلب أكثر من مرة كل ثانيتين
+            }
+            
+            lastFinnhubFetch = now;
+            
+            try {
+                const response = await fetch(
+                    `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${finnhubApiKey}`
+                );
+                
+                if (!response.ok) return null;
+                
+                const data = await response.json();
+                if (data.c && data.c > 0) {
+                    return {
+                        price: data.c,
+                        high: data.h,
+                        low: data.l,
+                        open: data.o,
+                        volume: data.v
+                    };
+                }
+            } catch (err) {
+                console.log('Finnhub fetch error:', err);
+            }
+            
+            return null;
+        }
+        
+        // ===== API Key =====
         function closeAPISetup() {
             document.getElementById('apiSetup').classList.add('collapsed');
         }
@@ -716,14 +630,17 @@
                 localStorage.setItem('finnhubApiKey', apiKey);
                 finnhubApiKey = apiKey;
                 closeAPISetup();
+                document.getElementById('dataSource').textContent = '✅ Finnhub API متصل';
             }
         }
         
         if (finnhubApiKey) {
             document.getElementById('apiKey').value = finnhubApiKey;
             closeAPISetup();
+            document.getElementById('dataSource').textContent = '✅ Finnhub API متصل';
         }
         
+        // ===== Confluence =====
         function calculateConfluence(price, ma9, ma20, rsi) {
             let score = 0;
             if (ma9 > ma20) score += 1.5;
@@ -733,8 +650,32 @@
             return Math.min(5, score);
         }
         
+        // ===== استراتيجيات التوصيات =====
+        const strategies = {
+            'MA Cross': {
+                name: 'MA Cross',
+                check: (p, ma9, ma20, rsi) => ma9 > ma20 && p > ma9
+            },
+            'RSI Neutral': {
+                name: 'RSI Neutral',
+                check: (p, ma9, ma20, rsi) => 40 <= rsi && rsi <= 60
+            },
+            'Breakout': {
+                name: 'Breakout',
+                check: (p, ma9, ma20, rsi) => p > ma9 && ma9 > ma20
+            }
+        };
+        
         function generateRecommendation(symbol, price, ma9, ma20, rsi, confluence) {
             if (confluence < 3) return null;
+            
+            let triggeredStrategy = 'Unknown';
+            for (const [name, strategy] of Object.entries(strategies)) {
+                if (strategy.check(price, ma9, ma20, rsi)) {
+                    triggeredStrategy = name;
+                    break;
+                }
+            }
             
             const entry = parseFloat(price.toFixed(2));
             const tp1 = parseFloat((price * 1.005).toFixed(2));
@@ -744,6 +685,7 @@
             
             return {
                 symbol,
+                strategy: triggeredStrategy,
                 entry,
                 tp1,
                 tp2,
@@ -756,7 +698,7 @@
         
         function updateRecommendations() {
             const confluenceMin = parseFloat(document.getElementById('confluenceMin').value);
-            const oldRecs = recommendations.length;
+            const oldCount = recommendations.length;
             recommendations.length = 0;
             
             for (const sym of ['OKLO', 'TSLA']) {
@@ -772,8 +714,7 @@
                     if (rec) {
                         recommendations.push(rec);
                         
-                        // تنبيه إذا كانت توصية جديدة
-                        if (oldRecs < recommendations.length && isMonitoring) {
+                        if (oldCount < recommendations.length && isMonitoring) {
                             sendNotification(rec);
                         }
                     }
@@ -785,8 +726,8 @@
         
         function sendNotification(rec) {
             if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('🚀 توصية تداول جديدة', {
-                    body: `${rec.symbol}: الدخول ${rec.entry}، الهدف ${rec.tp2}، الخسارة ${rec.sl}`,
+                new Notification('🚀 توصية جديدة - ' + rec.strategy, {
+                    body: `${rec.symbol}: دخول ${rec.entry} | هدف ${rec.tp2} | خسارة ${rec.sl}`,
                     icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect fill="%23667eea" width="192" height="192"/><text x="96" y="96" font-size="60" fill="%23fff" text-anchor="middle" dy=".3em">🎯</text></svg>',
                     tag: 'scalping-' + rec.symbol,
                     requireInteraction: true
@@ -806,7 +747,10 @@
                 <div class="rec-card">
                     <div class="rec-header">
                         <div class="rec-symbol">${rec.symbol}</div>
-                        <div class="rec-confidence">ثقة: ${rec.confidence}%</div>
+                        <div style="display: grid; gap: 4px;">
+                            <div class="rec-strategy">${rec.strategy}</div>
+                            <div class="rec-confidence">ثقة: ${rec.confidence}%</div>
+                        </div>
                     </div>
                     <div class="rec-info">
                         <div class="rec-row">
@@ -814,47 +758,49 @@
                             <div class="rec-value entry">${rec.entry}</div>
                         </div>
                         <div class="rec-row">
-                            <div class="rec-label">TP1:</div>
+                            <div class="rec-label">TP1 (+0.5%):</div>
                             <div class="rec-value tp">${rec.tp1}</div>
                         </div>
                         <div class="rec-row">
-                            <div class="rec-label">TP2:</div>
+                            <div class="rec-label">TP2 (+0.8%):</div>
                             <div class="rec-value tp">${rec.tp2}</div>
                         </div>
                         <div class="rec-row">
-                            <div class="rec-label">SL:</div>
+                            <div class="rec-label">SL (-0.3%):</div>
                             <div class="rec-value sl">${rec.sl}</div>
                         </div>
                         <div class="rec-row">
                             <div class="rec-label">R:R:</div>
                             <div class="rec-value">1:${rec.rr}</div>
                         </div>
+                        <div style="font-size: 0.7em; color: #999; margin-top: 6px; text-align: left;">
+                            ${rec.timestamp}
+                        </div>
                     </div>
                 </div>
             `).join('');
         }
         
+        // ===== Checklist =====
         function initChecklist() {
             const checklistEl = document.getElementById('checklist');
             checklistEl.innerHTML = checklist.map((item, idx) => `
-                <li><span>✅</span><span>${item}</span></li>
+                <li style="padding: 8px; margin: 4px 0; background: #d4edda; border-radius: 3px; color: #155724; border-left: 3px solid #28a745; font-size: 0.9em;">
+                    <span>✅</span> ${item}
+                </li>
             `).join('');
-            updateChecklistProgress();
         }
         
-        function updateChecklistProgress() {
-            const progress = (checklist.length / checklist.length * 100);
-            document.getElementById('progressBar').style.width = progress + '%';
-        }
-        
+        // ===== Tab Switching =====
         function switchTab(tab) {
-            document.querySelectorAll('.sidebar-card').forEach(card => card.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             
             document.getElementById(tab + 'Tab').classList.add('active');
             event.target.classList.add('active');
         }
         
+        // ===== Monitoring =====
         function startMonitoring() {
             if (isMonitoring) return;
             isMonitoring = true;
@@ -862,6 +808,10 @@
             const status = document.getElementById('status');
             status.classList.add('status-running');
             document.getElementById('statusText').textContent = '🟢 قيد المراقبة';
+            
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
             
             monitoringInterval = setInterval(updateMonitoring, 1000);
             updateMonitoring();
@@ -876,10 +826,19 @@
             document.getElementById('statusText').textContent = '⚫ متوقفة';
         }
         
-        function updateMonitoring() {
+        async function updateMonitoring() {
+            // محاولة جلب من Finnhub
+            for (const sym of ['OKLO', 'TSLA']) {
+                const finnhubData = await fetchFromFinnhub(sym);
+                if (finnhubData) {
+                    simulators[sym].applyFinnhubPrice(finnhubData.price);
+                }
+            }
+            
+            // تحديث المحاكاة
             for (const sym of ['OKLO', 'TSLA']) {
                 const sim = simulators[sym];
-                sim.update();
+                if (!finnhubApiKey) sim.update(); // محاكاة فقط بدون API
                 
                 const price = sim.price;
                 const ma9 = sim.getMA(9);
@@ -908,6 +867,10 @@
         }
         
         // Initialize
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+        
         initChecklist();
         updateMonitoring();
     </script>
