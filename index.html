@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#f8f9ff">
-    <title>Scalping Assistant - متداول يومي ذكي</title>
+    <title>Scalping Assistant v1.0</title>
     <style>
         * {
             margin: 0;
@@ -27,7 +27,6 @@
             --accent1: #7c3aed;
             --accent2: #06b6d4;
             --light-bg: #f8f9ff;
-            --light-bg2: #eef2ff;
         }
 
         html, body {
@@ -47,54 +46,41 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #f8f9ff 0%, #eff2ff 25%, #e8e8ff 50%, #eff2ff 75%, #f8f9ff 100%);
-            background-size: 400% 400%;
-            animation: gradientFlow 20s ease infinite;
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
             z-index: -2;
+            opacity: 1;
         }
 
-        /* ====== ANIMATIONS ====== */
-        @keyframes gradientFlow {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        /* صورة دبي الأصلية - تحميل ديناميكي */
+        body {
+            background-image: linear-gradient(135deg, rgba(26, 26, 62, 0.75), rgba(45, 45, 95, 0.75)), 
+                              url('https://images.unsplash.com/photo-1512453475292-7cfe58f88b0e?w=1920&q=80');
+            background-attachment: fixed;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        @keyframes candleUp {
-            0%, 100% { transform: translateY(0) scaleY(1); opacity: 0.5; }
-            50% { transform: translateY(-15px) scaleY(1.2); opacity: 0.8; }
-        }
-
-        @keyframes candleDown {
-            0%, 100% { transform: translateY(0) scaleY(1); opacity: 0.3; }
-            50% { transform: translateY(8px) scaleY(0.8); opacity: 0.6; }
-        }
-
-        @keyframes floatParticle {
-            0% { transform: translateY(0) translateX(0); opacity: 0; }
-            10% { opacity: 0.6; }
-            90% { opacity: 0.6; }
-            100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
-        }
-
-        @keyframes glow {
-            0%, 100% { 
-                box-shadow: 0 0 20px rgba(0, 153, 255, 0.3);
-            }
-            50% { 
-                box-shadow: 0 0 40px rgba(0, 153, 255, 0.5);
-            }
+        /* طبقة شفافة إضافية لتحسين التباين */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(248, 249, 255, 0.08), rgba(240, 245, 255, 0.05));
+            pointer-events: none;
+            z-index: -1;
         }
 
         @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes pulse {
@@ -107,107 +93,135 @@
             50% { transform: translateY(-5px); }
         }
 
-        @keyframes neon-flicker {
-            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-                text-shadow: 0 0 10px rgba(0, 153, 255, 0.5);
-            }
-            20%, 24%, 55% {
-                text-shadow: none;
-            }
-        }
-
-        @keyframes waveMove {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(30px); }
-        }
-
-        /* ====== BACKGROUND CANVAS ====== */
-        .background-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.4;
-        }
-
-        /* ====== CONTAINER ====== */
         .container {
             display: grid;
             grid-template-rows: auto 1fr auto;
             height: 100vh;
             gap: 0;
-            position: relative;
-            z-index: 1;
         }
 
         /* ====== HEADER ====== */
         .header {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 255, 0.95) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(245, 247, 255, 0.98));
             padding: 12px 16px;
-            border-bottom: 2px solid var(--border);
+            border-bottom: 3px solid var(--primary);
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 100;
-            min-height: 50px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(0, 153, 255, 0.1);
+            min-height: 60px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px rgba(0, 153, 255, 0.25);
             animation: slideInUp 0.6s ease-out;
-            position: relative;
-            overflow: hidden;
         }
 
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 153, 255, 0.15), transparent);
-            animation: waveMove 4s infinite;
-            pointer-events: none;
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
         }
 
         .header-title {
             font-size: 18px;
             font-weight: bold;
-            background: linear-gradient(90deg, #0099ff, #7c3aed, #0099ff);
-            background-size: 200% 200%;
+            background: linear-gradient(90deg, #0099ff, #7c3aed);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            animation: neon-flicker 2s infinite;
-            position: relative;
-            z-index: 2;
         }
 
-        .header-status {
+        .version {
+            font-size: 10px;
+            color: var(--text-dim);
+            background: var(--light-bg2);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .status-indicator {
             display: flex;
-            gap: 12px;
             align-items: center;
-            font-size: 12px;
-            position: relative;
-            z-index: 2;
-            color: var(--text);
+            gap: 6px;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .status-indicator.live {
+            background: rgba(0, 204, 102, 0.2);
+            color: var(--success);
+        }
+
+        .status-indicator.cached {
+            background: rgba(255, 51, 102, 0.2);
+            color: var(--danger);
         }
 
         .status-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             animation: pulse 2s infinite;
-            box-shadow: 0 0 10px currentColor;
         }
 
-        .status-dot.online {
-            background: var(--success);
-            box-shadow: 0 0 15px var(--success);
+        .header-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .market-status {
+            display: flex;
+            gap: 12px;
+            font-size: 10px;
+            justify-content: center;
+        }
+
+        .time-box {
+            background: var(--card-bg);
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .time-label {
+            color: var(--text-dim);
+            font-size: 8px;
+            text-transform: uppercase;
+        }
+
+        .time-value {
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .market-state {
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .market-state.open {
+            background: rgba(0, 204, 102, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .market-state.closed {
+            background: rgba(255, 51, 102, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .market-state.premarket {
+            background: rgba(255, 153, 0, 0.2);
+            color: var(--warning);
+            border: 1px solid var(--warning);
         }
 
         /* ====== MAIN CONTENT ====== */
@@ -217,17 +231,12 @@
             gap: 12px;
             padding: 12px;
             overflow-y: auto;
-            overflow-x: hidden;
             scrollbar-width: thin;
             scrollbar-color: var(--border) transparent;
         }
 
         .main-content::-webkit-scrollbar {
             width: 6px;
-        }
-
-        .main-content::-webkit-scrollbar-track {
-            background: transparent;
         }
 
         .main-content::-webkit-scrollbar-thumb {
@@ -237,28 +246,14 @@
 
         /* ====== SECTION ====== */
         .section {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 247, 255, 0.8) 100%);
-            border: 1px solid var(--border);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(245, 247, 255, 0.92));
+            border: 1px solid rgba(229, 231, 235, 0.8);
             border-radius: 12px;
             overflow: hidden;
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(25px);
             animation: slideInUp 0.6s ease-out backwards;
             transition: all 0.3s ease;
-            position: relative;
-            box-shadow: 0 2px 8px rgba(0, 153, 255, 0.08);
-        }
-
-        .section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 153, 255, 0.1), transparent);
-            animation: waveMove 5s infinite;
-            pointer-events: none;
-            z-index: 0;
+            box-shadow: 0 8px 32px rgba(0, 153, 255, 0.15);
         }
 
         .section:nth-child(1) { animation-delay: 0.1s; }
@@ -270,7 +265,6 @@
         .section:hover {
             border-color: var(--primary);
             box-shadow: 0 4px 20px rgba(0, 153, 255, 0.2);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 255, 0.9) 100%);
         }
 
         .section-header {
@@ -283,25 +277,6 @@
             border-bottom: 1px solid var(--border);
             user-select: none;
             transition: all 0.3s ease;
-            position: relative;
-            z-index: 1;
-            overflow: hidden;
-        }
-
-        .section-header::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 153, 255, 0.1), transparent);
-            transition: left 0.5s ease;
-            z-index: -1;
-        }
-
-        .section-header:hover::after {
-            left: 100%;
         }
 
         .section-header-title {
@@ -311,17 +286,13 @@
             font-weight: 600;
             color: var(--primary);
             font-size: 14px;
-            position: relative;
-            z-index: 1;
         }
 
         .section-toggle {
             font-size: 12px;
             color: var(--text-dim);
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease;
             animation: float 3s ease-in-out infinite;
-            position: relative;
-            z-index: 1;
         }
 
         .section.collapsed .section-toggle {
@@ -334,8 +305,6 @@
             overflow-y: auto;
             transition: all 0.3s ease;
             animation: slideInUp 0.3s ease-out;
-            position: relative;
-            z-index: 1;
         }
 
         .section.collapsed .section-content {
@@ -345,55 +314,15 @@
         }
 
         /* ====== RECOMMENDATION CARD ====== */
-        .recommendation-section {
-            grid-column: 1;
-            order: -1;
-        }
-
         .recommendation-card {
-            background: linear-gradient(135deg, rgba(230, 244, 255, 0.9) 0%, rgba(220, 238, 255, 0.85) 50%, rgba(230, 244, 255, 0.9) 100%);
-            border: 2px solid var(--primary);
+            background: linear-gradient(135deg, rgba(230, 244, 255, 0.98), rgba(220, 238, 255, 0.95));
+            border: 3px solid var(--primary);
             border-radius: 16px;
             padding: 24px;
             text-align: center;
-            position: relative;
-            overflow: hidden;
             animation: slideInUp 0.6s ease-out;
-            box-shadow: 0 8px 32px rgba(0, 153, 255, 0.2);
-        }
-
-        .recommendation-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(from 0deg, transparent, rgba(0, 153, 255, 0.1), transparent);
-            animation: rotate 20s linear infinite;
-            pointer-events: none;
-        }
-
-        .recommendation-card::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 16px;
-            box-shadow: inset 0 0 30px rgba(0, 153, 255, 0.15), 
-                        0 0 40px rgba(0, 153, 255, 0.25),
-                        0 0 80px rgba(124, 58, 237, 0.08);
-            animation: glow 2s ease-in-out infinite;
-            pointer-events: none;
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .recommendation-card > * {
-            position: relative;
-            z-index: 2;
+            box-shadow: 0 12px 48px rgba(0, 153, 255, 0.3);
+            backdrop-filter: blur(30px);
         }
 
         .rec-symbol {
@@ -404,7 +333,6 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 8px;
-            animation: float 3s ease-in-out infinite;
         }
 
         .rec-strategy {
@@ -412,7 +340,6 @@
             color: var(--warning);
             margin-bottom: 12px;
             font-weight: 600;
-            letter-spacing: 1px;
         }
 
         .rec-confidence {
@@ -423,7 +350,6 @@
             background-clip: text;
             font-weight: bold;
             margin-bottom: 16px;
-            animation: neon-flicker 2.5s infinite;
         }
 
         .rec-grid {
@@ -434,31 +360,16 @@
         }
 
         .rec-item {
-            background: linear-gradient(135deg, rgba(0, 153, 255, 0.15) 0%, rgba(124, 58, 237, 0.08) 100%);
+            background: linear-gradient(135deg, rgba(0, 153, 255, 0.15), rgba(124, 58, 237, 0.08));
             padding: 12px;
             border-radius: 8px;
             border: 1px solid rgba(0, 153, 255, 0.25);
-            backdrop-filter: blur(10px);
             transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .rec-item::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(45deg, transparent 30%, rgba(0, 153, 255, 0.1) 50%, transparent 70%);
-            animation: waveMove 2s infinite;
-            pointer-events: none;
         }
 
         .rec-item:hover {
             transform: translateY(-3px);
             box-shadow: 0 8px 16px rgba(0, 153, 255, 0.2);
-            border-color: var(--warning);
-            background: linear-gradient(135deg, rgba(0, 153, 255, 0.25) 0%, rgba(124, 58, 237, 0.15) 100%);
         }
 
         .rec-item-label {
@@ -466,31 +377,17 @@
             color: var(--text-dim);
             text-transform: uppercase;
             margin-bottom: 4px;
-            letter-spacing: 1px;
-            position: relative;
-            z-index: 2;
         }
 
         .rec-item-value {
             font-size: 16px;
             font-weight: bold;
             color: var(--primary);
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 2;
         }
 
-        .rec-item.positive .rec-item-value {
-            color: var(--success);
-        }
-
-        .rec-item.negative .rec-item-value {
-            color: var(--danger);
-        }
-
-        .rec-item.neutral .rec-item-value {
-            color: var(--warning);
-        }
+        .rec-item.positive .rec-item-value { color: var(--success); }
+        .rec-item.negative .rec-item-value { color: var(--danger); }
+        .rec-item.neutral .rec-item-value { color: var(--warning); }
 
         .rec-action {
             display: flex;
@@ -507,31 +404,7 @@
             cursor: pointer;
             font-size: 13px;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
             text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .btn-action::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.3);
-            transition: left 0.4s ease;
-            z-index: 0;
-        }
-
-        .btn-action:hover::before {
-            left: 100%;
-        }
-
-        .btn-action span {
-            position: relative;
-            z-index: 1;
         }
 
         .btn-buy {
@@ -540,34 +413,15 @@
             box-shadow: 0 4px 15px rgba(0, 204, 102, 0.4);
         }
 
-        .btn-buy:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 204, 102, 0.6);
-        }
-
-        .btn-sell {
-            background: linear-gradient(135deg, #ff3366, #ff2255);
-            color: white;
-            box-shadow: 0 4px 15px rgba(255, 51, 102, 0.4);
-        }
-
-        .btn-sell:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 51, 102, 0.6);
-        }
+        .btn-buy:hover { transform: translateY(-2px); }
 
         .btn-skip {
-            background: linear-gradient(135deg, rgba(107, 114, 128, 0.3), rgba(107, 114, 128, 0.2));
+            background: rgba(107, 114, 128, 0.2);
             color: var(--text);
             border: 1px solid var(--border);
         }
 
-        .btn-skip:hover {
-            background: linear-gradient(135deg, rgba(107, 114, 128, 0.5), rgba(107, 114, 128, 0.4));
-            border-color: var(--text-dim);
-        }
-
-        /* ====== STOCK CARDS ====== */
+        /* ====== STOCKS GRID ====== */
         .stocks-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -575,39 +429,19 @@
         }
 
         .stock-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 249, 255, 0.6) 100%);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 249, 255, 0.6));
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 14px;
             transition: all 0.3s ease;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
             box-shadow: 0 2px 8px rgba(0, 153, 255, 0.08);
-        }
-
-        .stock-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(0, 153, 255, 0.15) 0%, transparent 70%);
-            transition: all 0.3s ease;
-            pointer-events: none;
         }
 
         .stock-card:hover {
             border-color: var(--primary);
             box-shadow: 0 4px 20px rgba(0, 153, 255, 0.2);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 255, 0.85) 100%);
             transform: translateY(-4px);
-        }
-
-        .stock-card:hover::before {
-            top: -25%;
-            right: -25%;
         }
 
         .stock-symbol {
@@ -618,17 +452,13 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 4px;
-            position: relative;
-            z-index: 2;
         }
 
         .stock-price {
             font-size: 14px;
             color: var(--text);
-            margin-bottom: 8px;
-            position: relative;
-            z-index: 2;
             font-weight: 500;
+            margin-bottom: 8px;
         }
 
         .stock-stats {
@@ -637,23 +467,14 @@
             gap: 6px;
             font-size: 11px;
             color: var(--text-dim);
-            position: relative;
-            z-index: 2;
         }
 
         .stat-item {
-            background: linear-gradient(135deg, rgba(0, 153, 255, 0.12), rgba(124, 58, 237, 0.08));
+            background: rgba(0, 153, 255, 0.12);
             padding: 6px;
             border-radius: 4px;
             text-align: center;
-            backdrop-filter: blur(10px);
             border: 1px solid rgba(0, 153, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .stat-item:hover {
-            background: linear-gradient(135deg, rgba(0, 153, 255, 0.25), rgba(124, 58, 237, 0.15));
-            border-color: var(--primary);
         }
 
         /* ====== FORMS ====== */
@@ -679,19 +500,17 @@
             margin-bottom: 6px;
             text-transform: uppercase;
             font-weight: 600;
-            letter-spacing: 0.5px;
         }
 
         .form-field input,
         .form-field select {
-            background: linear-gradient(135deg, rgba(248, 249, 255, 0.9), rgba(245, 247, 255, 0.8));
+            background: rgba(248, 249, 255, 0.9);
             border: 1px solid var(--border);
             color: var(--text);
             padding: 10px 12px;
             border-radius: 6px;
             font-size: 13px;
             transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
         }
 
         .form-field input:focus,
@@ -699,7 +518,22 @@
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 15px rgba(0, 153, 255, 0.3);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 255, 0.9));
+        }
+
+        .save-btn {
+            background: var(--success);
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn:hover {
+            box-shadow: 0 4px 12px rgba(0, 204, 102, 0.4);
         }
 
         /* ====== CHECKLIST ====== */
@@ -713,19 +547,18 @@
             align-items: center;
             gap: 8px;
             padding: 10px;
-            background: linear-gradient(135deg, rgba(0, 153, 255, 0.08), rgba(124, 58, 237, 0.04));
+            background: rgba(0, 153, 255, 0.08);
             border-radius: 6px;
             font-size: 12px;
             border-left: 3px solid rgba(0, 153, 255, 0.25);
             transition: all 0.3s ease;
             cursor: pointer;
-            backdrop-filter: blur(10px);
             color: var(--text);
         }
 
         .checklist-item:hover {
             border-left-color: var(--primary);
-            background: linear-gradient(135deg, rgba(0, 153, 255, 0.15), rgba(124, 58, 237, 0.08));
+            background: rgba(0, 153, 255, 0.15);
         }
 
         .checklist-item input[type="checkbox"] {
@@ -736,16 +569,34 @@
         }
 
         .checklist-item.checked {
-            background: linear-gradient(135deg, rgba(0, 204, 102, 0.15), rgba(0, 204, 102, 0.05));
+            background: rgba(0, 204, 102, 0.15);
             color: var(--success);
             border-left-color: var(--success);
         }
 
+        /* ====== RESULTS LOG ====== */
+        .results-log {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: var(--card-bg-alt);
+            border-left: 3px solid var(--primary);
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .log-entry.win { border-left-color: var(--success); }
+        .log-entry.loss { border-left-color: var(--danger); }
+
         /* ====== FOOTER ====== */
         .footer {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 255, 0.85));
-            border-top: 1px solid var(--border);
-            padding: 10px 16px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(245, 247, 255, 0.98));
+            border-top: 2px solid var(--border);
+            padding: 8px 16px;
             font-size: 11px;
             color: var(--text-dim);
             text-align: center;
@@ -753,10 +604,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
             box-shadow: 0 -4px 20px rgba(0, 153, 255, 0.1);
-            position: relative;
-            z-index: 100;
         }
 
         /* ====== NO REC ====== */
@@ -775,77 +624,41 @@
 
         /* ====== RESPONSIVE ====== */
         @media (max-width: 600px) {
-            .header-title {
-                font-size: 16px;
-            }
-
-            .rec-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stocks-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .input-group {
-                grid-template-columns: 1fr;
-            }
-
-            .rec-symbol {
-                font-size: 32px;
-            }
-
-            .rec-confidence {
-                font-size: 24px;
-            }
+            .header { min-height: 70px; flex-wrap: wrap; }
+            .header-center { width: 100%; order: 3; }
+            .market-status { font-size: 9px; gap: 6px; }
+            .rec-grid { grid-template-columns: 1fr; }
+            .stocks-grid { grid-template-columns: 1fr; }
+            .input-group { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <svg class="background-canvas" width="100%" height="100%">
-        <!-- Dynamic Candles -->
-        <g id="candles">
-            <rect x="5%" y="20%" width="30" height="60" fill="rgba(0, 204, 102, 0.5)" style="animation: candleUp 3s ease-in-out infinite;"/>
-            <rect x="15%" y="30%" width="30" height="50" fill="rgba(255, 51, 102, 0.4)" style="animation: candleDown 4s ease-in-out infinite;"/>
-            <rect x="25%" y="25%" width="30" height="55" fill="rgba(0, 204, 102, 0.5)" style="animation: candleUp 3.5s ease-in-out infinite;"/>
-            <rect x="35%" y="35%" width="30" height="45" fill="rgba(255, 51, 102, 0.4)" style="animation: candleDown 3s ease-in-out infinite;"/>
-            <rect x="60%" y="15%" width="30" height="70" fill="rgba(0, 204, 102, 0.5)" style="animation: candleUp 4s ease-in-out infinite;"/>
-            <rect x="70%" y="40%" width="30" height="40" fill="rgba(255, 51, 102, 0.4)" style="animation: candleDown 3.5s ease-in-out infinite;"/>
-            <rect x="80%" y="28%" width="30" height="52" fill="rgba(0, 204, 102, 0.5)" style="animation: candleUp 3s ease-in-out infinite;"/>
-            <rect x="90%" y="32%" width="30" height="48" fill="rgba(255, 51, 102, 0.4)" style="animation: candleDown 4s ease-in-out infinite;"/>
-        </g>
-
-        <!-- Floating Particles -->
-        <g id="particles">
-            <circle cx="10%" cy="100%" r="3" fill="rgba(0, 153, 255, 0.5)" style="animation: floatParticle 8s ease-in infinite; animation-delay: 0s;"/>
-            <circle cx="20%" cy="100%" r="2" fill="rgba(0, 204, 102, 0.4)" style="animation: floatParticle 10s ease-in infinite; animation-delay: 1s;"/>
-            <circle cx="30%" cy="100%" r="2" fill="rgba(255, 153, 0, 0.3)" style="animation: floatParticle 9s ease-in infinite; animation-delay: 2s;"/>
-            <circle cx="40%" cy="100%" r="3" fill="rgba(124, 58, 237, 0.4)" style="animation: floatParticle 11s ease-in infinite; animation-delay: 1.5s;"/>
-            <circle cx="50%" cy="100%" r="2" fill="rgba(0, 153, 255, 0.4)" style="animation: floatParticle 8.5s ease-in infinite; animation-delay: 2.5s;"/>
-            <circle cx="60%" cy="100%" r="3" fill="rgba(0, 204, 102, 0.3)" style="animation: floatParticle 10.5s ease-in infinite; animation-delay: 0.5s;"/>
-            <circle cx="70%" cy="100%" r="2" fill="rgba(255, 153, 0, 0.4)" style="animation: floatParticle 9.5s ease-in infinite; animation-delay: 2s;"/>
-            <circle cx="80%" cy="100%" r="3" fill="rgba(124, 58, 237, 0.3)" style="animation: floatParticle 11.5s ease-in infinite; animation-delay: 1s;"/>
-            <circle cx="90%" cy="100%" r="2" fill="rgba(0, 153, 255, 0.3)" style="animation: floatParticle 9s ease-in infinite; animation-delay: 2.5s;"/>
-        </g>
-
-        <!-- Wave Lines -->
-        <path d="M 0,50% Q 25%,40% 50%,50% T 100%,50%" 
-              stroke="rgba(0, 153, 255, 0.25)" stroke-width="2" fill="none" 
-              style="animation: waveMove 6s ease-in-out infinite;"/>
-        <path d="M 0,70% Q 25%,60% 50%,70% T 100%,70%" 
-              stroke="rgba(0, 204, 102, 0.2)" stroke-width="2" fill="none" 
-              style="animation: waveMove 8s ease-in-out infinite; animation-delay: 1s;"/>
-    </svg>
-
     <div class="container">
         <!-- HEADER -->
         <div class="header">
-            <div class="header-title">
-                🚀 Scalping Assistant
+            <div class="header-left">
+                <div>
+                    <div class="header-title">🚀 Scalping Assistant <span class="version">v1.0</span></div>
+                </div>
+                <div id="status-indicator" class="status-indicator live">
+                    <span class="status-dot" style="background: #00cc66;"></span>
+                    جاهز
+                </div>
             </div>
-            <div class="header-status">
-                <span class="status-dot online"></span>
-                <span id="status-text">جاهز</span>
+
+            <div class="header-center">
+                <div class="market-status">
+                    <div class="time-box">
+                        <div class="time-label">الإمارات</div>
+                        <div class="time-value" id="time-uae">--:--</div>
+                    </div>
+                    <div class="time-box">
+                        <div class="time-label">أمريكا</div>
+                        <div class="time-value" id="time-usa">--:--</div>
+                    </div>
+                    <div class="market-state" id="market-state">CLOSED</div>
+                </div>
             </div>
         </div>
 
@@ -853,12 +666,18 @@
         <div class="main-content">
 
             <!-- RECOMMENDATION SECTION -->
-            <div class="section recommendation-section">
-                <div id="recommendation-container">
-                    <div class="recommendation-card">
-                        <div class="no-rec">
-                            <div class="no-rec-icon">⏳</div>
-                            <div>جاري تحليل الأسهم...</div>
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div class="section-header-title">🎯 التوصية</div>
+                    <div class="section-toggle">▼</div>
+                </div>
+                <div class="section-content">
+                    <div id="recommendation-container">
+                        <div class="recommendation-card">
+                            <div class="no-rec">
+                                <div class="no-rec-icon">⏳</div>
+                                <div>جاري تحليل الأسهم...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -867,20 +686,17 @@
             <!-- API KEY SECTION -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection(this)">
-                    <div class="section-header-title">
-                        🔑 مفتاح Finnhub API
-                    </div>
+                    <div class="section-header-title">🔑 مفتاح Finnhub API</div>
                     <div class="section-toggle">▼</div>
                 </div>
                 <div class="section-content">
                     <div class="form-field full">
-                        <label>أدخل مفتاح API (اختياري)</label>
-                        <input type="password" id="finnhub-key" placeholder="sk_live_..." 
-                               onchange="saveFinnhubKey(this.value)">
+                        <label>أدخل مفتاح API</label>
+                        <input type="password" id="finnhub-key" placeholder="sk_live_...">
+                        <button class="save-btn" onclick="saveFinnhubKey()">حفظ المفتاح</button>
                     </div>
-                    <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px; line-height: 1.6;">
-                        احصل على مفتاح مجاني من <a href="https://finnhub.io" target="_blank" style="color: var(--primary); text-decoration: none;">finnhub.io</a> 
-                        <br>(60 طلب/دقيقة)
+                    <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">
+                        احصل على مفتاح من <a href="https://finnhub.io" target="_blank" style="color: var(--primary);">finnhub.io</a>
                     </div>
                 </div>
             </div>
@@ -888,9 +704,7 @@
             <!-- SETTINGS SECTION -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection(this)">
-                    <div class="section-header-title">
-                        ⚙️ الإعدادات
-                    </div>
+                    <div class="section-header-title">⚙️ الإعدادات</div>
                     <div class="section-toggle">▼</div>
                 </div>
                 <div class="section-content">
@@ -914,18 +728,17 @@
                             </select>
                         </div>
                     </div>
-
                     <div class="input-group">
                         <div class="form-field">
                             <label>تحديث البيانات (ثانية)</label>
                             <input type="number" id="interval" value="5" min="1" max="60" onchange="updateInterval(this.value)">
                         </div>
                         <div class="form-field">
-                            <label>حد Confluence الأدنى</label>
+                            <label>Confluence الأدنى</label>
                             <select id="confluence-min" onchange="updateConfluence(this.value)">
-                                <option value="1">1 استراتيجية</option>
-                                <option value="2">2 استراتيجية</option>
-                                <option value="3" selected>3 استراتيجيات (آمن)</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3" selected>3 (آمن)</option>
                             </select>
                         </div>
                     </div>
@@ -935,56 +748,41 @@
             <!-- STOCKS SECTION -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection(this)">
-                    <div class="section-header-title">
-                        📊 أسعار الأسهم
-                    </div>
+                    <div class="section-header-title">📊 أسعار الأسهم</div>
                     <div class="section-toggle">▼</div>
                 </div>
                 <div class="section-content">
-                    <div class="stocks-grid" id="stocks-container">
-                        <!-- يتم ملأها بـ JavaScript -->
-                    </div>
+                    <div class="stocks-grid" id="stocks-container"></div>
                 </div>
             </div>
 
             <!-- CHECKLIST SECTION -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection(this)">
-                    <div class="section-header-title">
-                        ✅ Pre-Trade Checklist
-                    </div>
+                    <div class="section-header-title">✅ Pre-Trade Checklist</div>
                     <div class="section-toggle">▼</div>
                 </div>
                 <div class="section-content">
-                    <div class="checklist-items" id="checklist-container">
-                        <!-- يتم ملأها بـ JavaScript -->
+                    <div class="checklist-items" id="checklist-container"></div>
+                    <div style="margin-top: 12px; padding: 8px; background: rgba(0, 153, 255, 0.1); border-radius: 6px; font-size: 11px; color: var(--text-dim);">
+                        تحقق تلقائي من جميع النقاط قبل الدخول
                     </div>
                 </div>
             </div>
 
-            <!-- STRATEGY INFO -->
+            <!-- RESULTS LOG SECTION -->
             <div class="section">
                 <div class="section-header" onclick="toggleSection(this)">
-                    <div class="section-header-title">
-                        📘 الاستراتيجيات
-                    </div>
+                    <div class="section-header-title">📈 سجل النتائج</div>
                     <div class="section-toggle">▼</div>
                 </div>
                 <div class="section-content">
-                    <div style="font-size: 12px; line-height: 2; color: var(--text-dim);">
-                        <div style="margin-bottom: 14px; padding: 10px; border-left: 3px solid var(--primary); background: rgba(0, 153, 255, 0.1);">
-                            <strong style="color: var(--primary);">1. MA Cross</strong><br>
-                            MA9 > MA20 والسعر > MA9
-                        </div>
-                        <div style="margin-bottom: 14px; padding: 10px; border-left: 3px solid var(--warning); background: rgba(255, 153, 0, 0.1);">
-                            <strong style="color: var(--warning);">2. RSI Neutral</strong><br>
-                            RSI بين 40-60
-                        </div>
-                        <div style="padding: 10px; border-left: 3px solid var(--success); background: rgba(0, 204, 102, 0.1);">
-                            <strong style="color: var(--success);">3. Breakout</strong><br>
-                            High كُسر + Volume عالي + RSI > 50
+                    <div class="results-log" id="results-log">
+                        <div style="text-align: center; color: var(--text-dim); padding: 20px; font-size: 12px;">
+                            لا توجد نتائج حالياً
                         </div>
                     </div>
+                    <button class="save-btn" style="width: 100%; margin-top: 8px;" onclick="clearResults()">مسح السجل</button>
                 </div>
             </div>
 
@@ -992,8 +790,7 @@
 
         <!-- FOOTER -->
         <div class="footer">
-            آخر تحديث: <span id="last-update" style="color: var(--primary); font-weight: 600;">الآن</span> | 
-            <span style="color: var(--success);">Confluence ≥ 3 = ادخل بثقة</span>
+            آخر تحديث: <span id="last-update" style="color: var(--primary); font-weight: 600;">الآن</span> | النسخة v1.0
         </div>
     </div>
 
@@ -1006,38 +803,33 @@
             finnhubKey: localStorage.getItem('finnhub-key') || ''
         };
 
-        let lastFinnhubFetch = 0;
-        const FINNHUB_RATE_LIMIT = 2000;
+        let checkedItems = 0;
+        let maxCheckedItems = 10;
+        let resultsLog = JSON.parse(localStorage.getItem('trading-results')) || [];
+        let pricesAreLive = false;
 
-        // ===== INITIALIZE =====
-        document.getElementById('finnhub-key').value = config.finnhubKey;
-
-        // ===== TOGGLE SECTIONS =====
+        // ===== TOGGLE SECTION =====
         function toggleSection(header) {
             const section = header.closest('.section');
             section.classList.toggle('collapsed');
         }
 
-        // ===== SAVE API KEY =====
-        function saveFinnhubKey(key) {
-            config.finnhubKey = key;
-            localStorage.setItem('finnhub-key', key);
+        // ===== SAVE FINNHUB KEY =====
+        function saveFinnhubKey() {
+            const key = document.getElementById('finnhub-key').value;
+            if (key) {
+                config.finnhubKey = key;
+                localStorage.setItem('finnhub-key', key);
+                alert('✅ تم حفظ المفتاح بنجاح!');
+            }
         }
 
-        // ===== UPDATE SETTINGS =====
-        function updateSymbol(index, symbol) {
-            config.symbols[index - 1] = symbol;
-        }
+        // ===== UPDATE CONFIG =====
+        function updateSymbol(index, symbol) { config.symbols[index - 1] = symbol; }
+        function updateInterval(value) { config.interval = parseInt(value) * 1000; }
+        function updateConfluence(value) { config.confluenceMin = parseInt(value); }
 
-        function updateInterval(value) {
-            config.interval = parseInt(value) * 1000;
-        }
-
-        function updateConfluence(value) {
-            config.confluenceMin = parseInt(value);
-        }
-
-        // ===== SIMULATE PRICE DATA =====
+        // ===== GENERATE MOCK DATA =====
         function generateMockData(symbol) {
             const basePrice = { 'OKLO': 8.50, 'TSLA': 238, 'NVDA': 132, 'AAPL': 225 };
             const base = basePrice[symbol] || 100;
@@ -1055,12 +847,11 @@
                 ma20: ma20.toFixed(2),
                 rsi: rsi.toFixed(0),
                 high: high.toFixed(2),
-                volume: Math.floor(Math.random() * 10000000),
-                timestamp: new Date().toLocaleTimeString('ar-AE')
+                volume: Math.floor(Math.random() * 10000000)
             };
         }
 
-        // ===== GENERATE RECOMMENDATIONS =====
+        // ===== GENERATE RECOMMENDATION =====
         function generateRecommendation(data) {
             const price = parseFloat(data.price);
             const ma9 = parseFloat(data.ma9);
@@ -1102,7 +893,6 @@
                     tp2,
                     sl,
                     rr,
-                    direction: 'BUY',
                     confluence
                 };
             }
@@ -1139,15 +929,15 @@
                             <div class="rec-item-value">${rec.entry}</div>
                         </div>
                         <div class="rec-item positive">
-                            <div class="rec-item-label">TP1 (+0.5%)</div>
+                            <div class="rec-item-label">TP1</div>
                             <div class="rec-item-value">${rec.tp1}</div>
                         </div>
                         <div class="rec-item positive">
-                            <div class="rec-item-label">TP2 (+0.8%)</div>
+                            <div class="rec-item-label">TP2</div>
                             <div class="rec-item-value">${rec.tp2}</div>
                         </div>
                         <div class="rec-item negative">
-                            <div class="rec-item-label">SL (-0.3%)</div>
+                            <div class="rec-item-label">SL</div>
                             <div class="rec-item-value">${rec.sl}</div>
                         </div>
                         <div class="rec-item neutral">
@@ -1161,13 +951,14 @@
                     </div>
 
                     <div class="rec-action">
-                        <button class="btn-action btn-buy"><span>شراء الآن</span></button>
-                        <button class="btn-action btn-skip"><span>تخطي</span></button>
+                        <button class="btn-action btn-buy" onclick="recordResult('${rec.symbol}', true)">✅ ربح</button>
+                        <button class="btn-action btn-skip" onclick="recordResult('${rec.symbol}', false)">❌ خسارة</button>
                     </div>
                 </div>
             `;
 
             document.getElementById('recommendation-container').innerHTML = html;
+            playSound();
         }
 
         // ===== RENDER STOCKS =====
@@ -1178,18 +969,10 @@
                     <div class="stock-symbol">${data.symbol}</div>
                     <div class="stock-price">💵 ${data.price}</div>
                     <div class="stock-stats">
-                        <div class="stat-item">
-                            <strong>MA9</strong><br>${data.ma9}
-                        </div>
-                        <div class="stat-item">
-                            <strong>MA20</strong><br>${data.ma20}
-                        </div>
-                        <div class="stat-item">
-                            <strong>RSI</strong><br>${data.rsi}
-                        </div>
-                        <div class="stat-item">
-                            <strong>Vol</strong><br>${(data.volume / 1000000).toFixed(1)}M
-                        </div>
+                        <div class="stat-item"><strong>MA9</strong><br>${data.ma9}</div>
+                        <div class="stat-item"><strong>MA20</strong><br>${data.ma20}</div>
+                        <div class="stat-item"><strong>RSI</strong><br>${data.rsi}</div>
+                        <div class="stat-item"><strong>Vol</strong><br>${(data.volume / 1000000).toFixed(1)}M</div>
                     </div>
                 </div>
             `).join('');
@@ -1198,34 +981,150 @@
         // ===== RENDER CHECKLIST =====
         function renderChecklist() {
             const items = [
-                { label: 'السوق مفتوح', id: 'market-open' },
-                { label: 'Confluence ≥ 3', id: 'confluence' },
-                { label: 'RSI بين 40-60', id: 'rsi-neutral' },
-                { label: 'MA9 > MA20', id: 'ma-cross' },
-                { label: 'السعر > MA9', id: 'price-above-ma' },
-                { label: 'Volume موجود', id: 'volume' },
-                { label: 'رأس مال محدد', id: 'capital' },
-                { label: 'TP محدد', id: 'tp' },
-                { label: 'SL محدد', id: 'sl' },
-                { label: 'تركيز كامل', id: 'focus' }
+                'السوق مفتوح',
+                'Confluence ≥ 3',
+                'RSI بين 40-60',
+                'MA9 > MA20',
+                'السعر > MA9',
+                'Volume موجود',
+                'رأس مال محدد',
+                'TP محدد',
+                'SL محدد',
+                'تركيز كامل'
             ];
 
             const container = document.getElementById('checklist-container');
-            container.innerHTML = items.map(item => `
-                <div class="checklist-item" id="check-${item.id}">
-                    <input type="checkbox" onchange="updateChecklist(this)">
-                    <span>${item.label}</span>
+            container.innerHTML = items.map((item, i) => `
+                <div class="checklist-item" id="check-${i}">
+                    <input type="checkbox" onchange="updateChecklist(this, ${i})">
+                    <span>${item}</span>
+                </div>
+            `).join('');
+
+            // Auto-check first 6 items (simulating auto-check)
+            for (let i = 0; i < 6; i++) {
+                document.getElementById(`check-${i}`).querySelector('input').checked = true;
+                document.getElementById(`check-${i}`).classList.add('checked');
+            }
+            checkedItems = 6;
+            updateChecklistStatus();
+        }
+
+        function updateChecklist(checkbox, index) {
+            const item = checkbox.closest('.checklist-item');
+            if (checkbox.checked) {
+                item.classList.add('checked');
+                checkedItems++;
+            } else {
+                item.classList.remove('checked');
+                checkedItems--;
+            }
+            updateChecklistStatus();
+        }
+
+        function updateChecklistStatus() {
+            const percent = Math.round((checkedItems / maxCheckedItems) * 100);
+            const indicator = document.getElementById('status-indicator');
+            if (percent === 100) {
+                indicator.innerHTML = '<span class="status-dot" style="background: #00cc66;"></span>جاهز';
+                indicator.className = 'status-indicator live';
+            }
+        }
+
+        // ===== RECORD RESULT =====
+        function recordResult(symbol, isWin) {
+            const result = {
+                symbol,
+                result: isWin ? '✅ ربح' : '❌ خسارة',
+                time: new Date().toLocaleTimeString('ar-AE'),
+                date: new Date().toLocaleDateString('ar-AE')
+            };
+
+            resultsLog.push(result);
+            localStorage.setItem('trading-results', JSON.stringify(resultsLog));
+            renderResultsLog();
+        }
+
+        function renderResultsLog() {
+            const container = document.getElementById('results-log');
+            if (resultsLog.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 20px; font-size: 12px;">لا توجد نتائج حالياً</div>';
+                return;
+            }
+
+            container.innerHTML = resultsLog.reverse().map((log, i) => `
+                <div class="log-entry ${log.result.includes('ربح') ? 'win' : 'loss'}">
+                    <strong>${log.symbol}</strong> - ${log.result}<br>
+                    <small>${log.time} | ${log.date}</small>
                 </div>
             `).join('');
         }
 
-        function updateChecklist(checkbox) {
-            const item = checkbox.closest('.checklist-item');
-            item.classList.toggle('checked');
+        function clearResults() {
+            if (confirm('هل تريد مسح جميع النتائج؟')) {
+                resultsLog = [];
+                localStorage.removeItem('trading-results');
+                renderResultsLog();
+            }
         }
 
-        // ===== MAIN LOOP =====
-        async function updateData() {
+        // ===== UPDATE TIME & MARKET STATE =====
+        function updateTime() {
+            const now = new Date();
+            
+            // UAE Time
+            const uaeTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }));
+            document.getElementById('time-uae').textContent = uaeTime.toLocaleTimeString('ar-AE', { hour: '2-digit', minute: '2-digit' });
+
+            // USA Time
+            const usaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+            document.getElementById('time-usa').textContent = usaTime.toLocaleTimeString('ar-AE', { hour: '2-digit', minute: '2-digit' });
+
+            // Market Status
+            const day = usaTime.getDay();
+            const hours = usaTime.getHours();
+            const minutes = usaTime.getMinutes();
+            const isWeekend = day === 0 || day === 6;
+            const isOpen = hours >= 9 && hours < 16;
+            const isPreMarket = hours >= 4 && hours < 9;
+            const isPostMarket = hours >= 16 && hours < 20;
+
+            const statusEl = document.getElementById('market-state');
+            if (isWeekend) {
+                statusEl.textContent = 'CLOSED';
+                statusEl.className = 'market-state closed';
+            } else if (isOpen) {
+                statusEl.textContent = 'OPEN 🟢';
+                statusEl.className = 'market-state open';
+            } else if (isPreMarket) {
+                statusEl.textContent = 'PRE-MARKET';
+                statusEl.className = 'market-state premarket';
+            } else if (isPostMarket) {
+                statusEl.textContent = 'POST-MARKET';
+                statusEl.className = 'market-state premarket';
+            } else {
+                statusEl.textContent = 'CLOSED';
+                statusEl.className = 'market-state closed';
+            }
+        }
+
+        // ===== PLAY SOUND =====
+        function playSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.frequency.value = 800;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            osc.start(audioContext.currentTime);
+            osc.stop(audioContext.currentTime + 0.5);
+        }
+
+        // ===== UPDATE DATA =====
+        function updateData() {
             const allData = [];
             let bestRec = null;
 
@@ -1241,12 +1140,15 @@
 
             renderStocks(allData);
             renderRecommendation(bestRec);
-
             document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ar-AE');
         }
 
         // ===== INIT =====
+        document.getElementById('finnhub-key').value = config.finnhubKey;
+        updateTime();
+        setInterval(updateTime, 1000);
         renderChecklist();
+        renderResultsLog();
         updateData();
         setInterval(updateData, config.interval);
     </script>
