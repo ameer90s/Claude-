@@ -2,914 +2,1253 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-    <meta name="theme-color" content="#667eea">
-    <meta name="description" content="مساعد تداول يومي متقدم - توصيات تلقائية وتنبيهات فورية">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Scalping">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23667eea' width='192' height='192'/><text x='96' y='96' font-size='60' fill='%23fff' text-anchor='middle' dy='.3em'>🎯</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23667eea' width='180' height='180'/><text x='90' y='90' font-size='60' fill='%23fff' text-anchor='middle' dy='.3em'>🎯</text></svg>">
-    <title>Scalping Assistant - المساعد الذكي للتداول</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f8f9ff">
+    <title>Scalping Assistant - متداول يومي ذكي</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0099ff;
+            --success: #00cc66;
+            --danger: #ff3366;
+            --warning: #ff9900;
+            --dark: #1a1a3e;
+            --darker: #2d2d5f;
+            --card-bg: #ffffff;
+            --card-bg-alt: #f5f7ff;
+            --text: #2d3561;
+            --text-dim: #6b7280;
+            --border: #e5e7eb;
+            --accent1: #7c3aed;
+            --accent2: #06b6d4;
+            --light-bg: #f8f9ff;
+            --light-bg2: #eef2ff;
+        }
+
         html, body {
             width: 100%;
             height: 100%;
-            overflow-x: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
+            overflow: hidden;
+            position: relative;
+            background: var(--light-bg);
         }
-        
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 10px;
-            padding-top: max(10px, env(safe-area-inset-top));
-            padding-bottom: max(10px, env(safe-area-inset-bottom));
-            padding-left: max(10px, env(safe-area-inset-left));
-            padding-right: max(10px, env(safe-area-inset-right));
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f8f9ff 0%, #eff2ff 25%, #e8e8ff 50%, #eff2ff 75%, #f8f9ff 100%);
+            background-size: 400% 400%;
+            animation: gradientFlow 20s ease infinite;
+            z-index: -2;
         }
-        
+
+        /* ====== ANIMATIONS ====== */
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes candleUp {
+            0%, 100% { transform: translateY(0) scaleY(1); opacity: 0.5; }
+            50% { transform: translateY(-15px) scaleY(1.2); opacity: 0.8; }
+        }
+
+        @keyframes candleDown {
+            0%, 100% { transform: translateY(0) scaleY(1); opacity: 0.3; }
+            50% { transform: translateY(8px) scaleY(0.8); opacity: 0.6; }
+        }
+
+        @keyframes floatParticle {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+        }
+
+        @keyframes glow {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(0, 153, 255, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(0, 153, 255, 0.5);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        @keyframes neon-flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                text-shadow: 0 0 10px rgba(0, 153, 255, 0.5);
+            }
+            20%, 24%, 55% {
+                text-shadow: none;
+            }
+        }
+
+        @keyframes waveMove {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(30px); }
+        }
+
+        /* ====== BACKGROUND CANVAS ====== */
+        .background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        /* ====== CONTAINER ====== */
         .container {
-            max-width: 100%;
-            margin: 0 auto;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            gap: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ====== HEADER ====== */
+        .header {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 255, 0.95) 100%);
+            padding: 12px 16px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            min-height: 50px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 153, 255, 0.1);
+            animation: slideInUp 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 153, 255, 0.15), transparent);
+            animation: waveMove 4s infinite;
+            pointer-events: none;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #0099ff, #7c3aed, #0099ff);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: neon-flicker 2s infinite;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-status {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 12px;
+            position: relative;
+            z-index: 2;
+            color: var(--text);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .status-dot.online {
+            background: var(--success);
+            box-shadow: 0 0 15px var(--success);
+        }
+
+        /* ====== MAIN CONTENT ====== */
+        .main-content {
             display: grid;
             grid-template-columns: 1fr;
             gap: 12px;
-            height: 100%;
-        }
-        
-        .main {
-            background: white;
-            padding: 18px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            padding: 12px;
             overflow-y: auto;
-            max-height: calc(100vh - 100px);
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
         }
-        
-        h1 {
-            text-align: center;
-            margin-bottom: 15px;
-            color: #333;
-            font-size: 1.5em;
-            word-break: break-word;
+
+        .main-content::-webkit-scrollbar {
+            width: 6px;
         }
-        
-        .api-setup {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 12px;
-            margin-bottom: 12px;
-            border-radius: 5px;
-            color: #333;
-            position: relative;
+
+        .main-content::-webkit-scrollbar-track {
+            background: transparent;
         }
-        
-        .api-setup.collapsed {
-            display: none;
-        }
-        
-        .api-close {
-            position: absolute;
-            top: 8px;
-            left: 8px;
-            background: #ffc107;
-            border: none;
-            width: 24px;
-            height: 24px;
+
+        .main-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #0099ff, #7c3aed);
             border-radius: 3px;
-            cursor: pointer;
-            font-weight: bold;
-            color: black;
         }
-        
-        .api-setup input {
+
+        /* ====== SECTION ====== */
+        .section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 247, 255, 0.8) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            animation: slideInUp 0.6s ease-out backwards;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 153, 255, 0.08);
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
             width: 100%;
-            padding: 8px;
-            margin: 8px 0;
-            border: 2px solid #ffc107;
-            border-radius: 5px;
-            font-size: 0.9em;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 153, 255, 0.1), transparent);
+            animation: waveMove 5s infinite;
+            pointer-events: none;
+            z-index: 0;
         }
-        
-        .api-setup button {
-            background: #ffc107;
-            color: black;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
+
+        .section:nth-child(1) { animation-delay: 0.1s; }
+        .section:nth-child(2) { animation-delay: 0.2s; }
+        .section:nth-child(3) { animation-delay: 0.3s; }
+        .section:nth-child(4) { animation-delay: 0.4s; }
+        .section:nth-child(5) { animation-delay: 0.5s; }
+
+        .section:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 20px rgba(0, 153, 255, 0.2);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 255, 0.9) 100%);
+        }
+
+        .section-header {
+            background: linear-gradient(90deg, rgba(248, 249, 255, 0.8), rgba(255, 255, 255, 0.6));
+            padding: 12px 16px;
             cursor: pointer;
-            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            user-select: none;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .section-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
             width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 153, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+            z-index: -1;
         }
-        
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin-bottom: 12px;
+
+        .section-header:hover::after {
+            left: 100%;
         }
-        
-        .control {
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 5px;
-        }
-        
-        .control label {
-            display: block;
-            font-size: 0.85em;
-            color: #333;
-            margin-bottom: 5px;
+
+        .section-header-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-weight: 600;
+            color: var(--primary);
+            font-size: 14px;
+            position: relative;
+            z-index: 1;
         }
-        
-        input, select {
-            width: 100%;
-            padding: 8px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 0.9em;
-            color: #333;
+
+        .section-toggle {
+            font-size: 12px;
+            color: var(--text-dim);
+            transition: all 0.3s ease;
+            animation: float 3s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
         }
-        
-        .buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 12px;
+
+        .section.collapsed .section-toggle {
+            transform: rotate(-90deg);
         }
-        
-        button {
-            padding: 12px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.95em;
-            color: white;
-            transition: all 0.3s;
+
+        .section-content {
+            padding: 16px;
+            max-height: 500px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            animation: slideInUp 0.3s ease-out;
+            position: relative;
+            z-index: 1;
+        }
+
+        .section.collapsed .section-content {
+            max-height: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* ====== RECOMMENDATION CARD ====== */
+        .recommendation-section {
+            grid-column: 1;
+            order: -1;
+        }
+
+        .recommendation-card {
+            background: linear-gradient(135deg, rgba(230, 244, 255, 0.9) 0%, rgba(220, 238, 255, 0.85) 50%, rgba(230, 244, 255, 0.9) 100%);
+            border: 2px solid var(--primary);
+            border-radius: 16px;
+            padding: 24px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+            animation: slideInUp 0.6s ease-out;
+            box-shadow: 0 8px 32px rgba(0, 153, 255, 0.2);
         }
-        
-        .btn-start {
-            background: #27ae60;
+
+        .recommendation-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(0, 153, 255, 0.1), transparent);
+            animation: rotate 20s linear infinite;
+            pointer-events: none;
         }
-        
-        .btn-start:hover, .btn-start:active {
-            background: #229954;
-            transform: translateY(-2px);
+
+        .recommendation-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            box-shadow: inset 0 0 30px rgba(0, 153, 255, 0.15), 
+                        0 0 40px rgba(0, 153, 255, 0.25),
+                        0 0 80px rgba(124, 58, 237, 0.08);
+            animation: glow 2s ease-in-out infinite;
+            pointer-events: none;
         }
-        
-        .btn-stop {
-            background: #e74c3c;
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
-        
-        .btn-stop:hover, .btn-stop:active {
-            background: #c0392b;
-            transform: translateY(-2px);
+
+        .recommendation-card > * {
+            position: relative;
+            z-index: 2;
         }
-        
-        .status {
-            padding: 12px;
-            background: #fff3cd;
-            border-radius: 5px;
+
+        .rec-symbol {
+            font-size: 40px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #0099ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .rec-strategy {
+            font-size: 14px;
+            color: var(--warning);
             margin-bottom: 12px;
-            border-left: 4px solid #ffc107;
-            color: #333;
-            font-size: 0.9em;
+            font-weight: 600;
+            letter-spacing: 1px;
         }
-        
-        .status-running {
-            background: #d4edda !important;
-            border-left-color: #28a745 !important;
-            color: #155724 !important;
+
+        .rec-confidence {
+            font-size: 28px;
+            background: linear-gradient(90deg, #00cc66, #0099ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            margin-bottom: 16px;
+            animation: neon-flicker 2.5s infinite;
         }
-        
-        .status > div {
-            margin: 4px 0;
-            color: inherit;
-        }
-        
-        .price-grid {
+
+        .rec-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
-        
-        .price-card {
-            background: #f9f9f9;
+
+        .rec-item {
+            background: linear-gradient(135deg, rgba(0, 153, 255, 0.15) 0%, rgba(124, 58, 237, 0.08) 100%);
             padding: 12px;
             border-radius: 8px;
-            border: 2px solid #e0e0e0;
-            color: #333;
-        }
-        
-        .price-card h3 {
-            margin-bottom: 8px;
-            text-align: center;
-            font-size: 1.2em;
-            color: #333;
-        }
-        
-        .price-info {
-            display: grid;
-            gap: 4px;
-            font-size: 0.85em;
-        }
-        
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px;
-            background: white;
-            border-radius: 3px;
-            color: #333;
-        }
-        
-        .label {
-            color: #666;
-            font-weight: 500;
-            font-size: 0.8em;
-        }
-        
-        .value {
-            font-weight: bold;
-            color: #2c3e50;
-            font-size: 0.85em;
-        }
-        
-        .indicator {
-            padding: 5px;
-            margin: 4px 0;
-            border-radius: 3px;
-            font-size: 0.75em;
-            font-weight: 600;
-        }
-        
-        .indicator-good {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .indicator-bad {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .sidebar-tabs {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-        
-        .tab-btn {
-            background: #f0f0f0;
-            color: #333;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
+            border: 1px solid rgba(0, 153, 255, 0.25);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
             cursor: pointer;
-            font-weight: bold;
-            font-size: 0.85em;
-        }
-        
-        .tab-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        
-        .sidebar-card {
-            background: white;
-            padding: 12px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            color: #333;
-            display: none;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        .sidebar-card.active {
-            display: block;
-        }
-        
-        .sidebar-card h3 {
-            margin-bottom: 10px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #667eea;
-            color: #333;
-            font-size: 0.95em;
-        }
-        
-        .checklist {
-            list-style: none;
-        }
-        
-        .checklist li {
-            padding: 8px;
-            margin: 4px 0;
-            background: #d4edda;
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            color: #155724;
-            font-size: 0.85em;
-            border-left: 3px solid #28a745;
-        }
-        
-        .checklist li span {
-            margin-right: 8px;
-        }
-        
-        .checklist-progress {
-            width: 100%;
-            height: 6px;
-            background: #e0e0e0;
-            border-radius: 3px;
-            margin-bottom: 10px;
+            position: relative;
             overflow: hidden;
         }
-        
-        .checklist-progress-bar {
-            height: 100%;
-            background: #28a745;
-            width: 0%;
-            transition: width 0.3s;
+
+        .rec-item::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(0, 153, 255, 0.1) 50%, transparent 70%);
+            animation: waveMove 2s infinite;
+            pointer-events: none;
         }
-        
-        .strategy-rules {
-            background: #ecf0f1;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 0.8em;
-            line-height: 1.6;
-            color: #333;
+
+        .rec-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0, 153, 255, 0.2);
+            border-color: var(--warning);
+            background: linear-gradient(135deg, rgba(0, 153, 255, 0.25) 0%, rgba(124, 58, 237, 0.15) 100%);
         }
-        
-        .rule {
-            margin: 5px 0;
-            padding: 4px;
+
+        .rec-item-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 2;
         }
-        
-        .rule.good { color: #27ae60; }
-        .rule.warning { color: #e67e22; }
-        .rule.bad { color: #e74c3c; }
-        
-        .recommendations {
-            display: grid;
-            gap: 10px;
-        }
-        
-        .rec-card {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            color: #333;
-        }
-        
-        .rec-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .rec-symbol {
-            font-size: 1em;
+
+        .rec-item-value {
+            font-size: 16px;
             font-weight: bold;
-            color: #667eea;
+            color: var(--primary);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
         }
-        
-        .rec-confidence {
-            font-size: 0.75em;
-            background: #667eea;
+
+        .rec-item.positive .rec-item-value {
+            color: var(--success);
+        }
+
+        .rec-item.negative .rec-item-value {
+            color: var(--danger);
+        }
+
+        .rec-item.neutral .rec-item-value {
+            color: var(--warning);
+        }
+
+        .rec-action {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-action::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: left 0.4s ease;
+            z-index: 0;
+        }
+
+        .btn-action:hover::before {
+            left: 100%;
+        }
+
+        .btn-action span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-buy {
+            background: linear-gradient(135deg, #00cc66, #00dd77);
             color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
+            box-shadow: 0 4px 15px rgba(0, 204, 102, 0.4);
         }
-        
-        .rec-info {
-            display: grid;
-            gap: 3px;
-            font-size: 0.8em;
+
+        .btn-buy:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 204, 102, 0.6);
         }
-        
-        .rec-row {
+
+        .btn-sell {
+            background: linear-gradient(135deg, #ff3366, #ff2255);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 51, 102, 0.4);
+        }
+
+        .btn-sell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 51, 102, 0.6);
+        }
+
+        .btn-skip {
+            background: linear-gradient(135deg, rgba(107, 114, 128, 0.3), rgba(107, 114, 128, 0.2));
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-skip:hover {
+            background: linear-gradient(135deg, rgba(107, 114, 128, 0.5), rgba(107, 114, 128, 0.4));
+            border-color: var(--text-dim);
+        }
+
+        /* ====== STOCK CARDS ====== */
+        .stocks-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stock-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 249, 255, 0.6) 100%);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 153, 255, 0.08);
+        }
+
+        .stock-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 153, 255, 0.15) 0%, transparent 70%);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .stock-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 20px rgba(0, 153, 255, 0.2);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 247, 255, 0.85) 100%);
+            transform: translateY(-4px);
+        }
+
+        .stock-card:hover::before {
+            top: -25%;
+            right: -25%;
+        }
+
+        .stock-symbol {
+            font-size: 16px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #0099ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stock-price {
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 2;
+            font-weight: 500;
+        }
+
+        .stock-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-dim);
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, rgba(0, 153, 255, 0.12), rgba(124, 58, 237, 0.08));
+            padding: 6px;
+            border-radius: 4px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 153, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: linear-gradient(135deg, rgba(0, 153, 255, 0.25), rgba(124, 58, 237, 0.15));
+            border-color: var(--primary);
+        }
+
+        /* ====== FORMS ====== */
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .input-group.full {
+            grid-template-columns: 1fr;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-field label {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .form-field input,
+        .form-field select {
+            background: linear-gradient(135deg, rgba(248, 249, 255, 0.9), rgba(245, 247, 255, 0.8));
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-field input:focus,
+        .form-field select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 153, 255, 0.3);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 255, 0.9));
+        }
+
+        /* ====== CHECKLIST ====== */
+        .checklist-items {
+            display: grid;
             gap: 8px;
         }
-        
-        .rec-label {
-            color: #666;
-            font-weight: 500;
-            font-size: 0.75em;
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: linear-gradient(135deg, rgba(0, 153, 255, 0.08), rgba(124, 58, 237, 0.04));
+            border-radius: 6px;
+            font-size: 12px;
+            border-left: 3px solid rgba(0, 153, 255, 0.25);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            color: var(--text);
         }
-        
-        .rec-value {
-            font-weight: bold;
-            color: #2c3e50;
-            text-align: right;
-            font-size: 0.8em;
+
+        .checklist-item:hover {
+            border-left-color: var(--primary);
+            background: linear-gradient(135deg, rgba(0, 153, 255, 0.15), rgba(124, 58, 237, 0.08));
         }
-        
-        .rec-value.entry { color: #3498db; }
-        .rec-value.tp { color: #27ae60; }
-        .rec-value.sl { color: #e74c3c; }
-        
-        .no-recs {
+
+        .checklist-item input[type="checkbox"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--success);
+        }
+
+        .checklist-item.checked {
+            background: linear-gradient(135deg, rgba(0, 204, 102, 0.15), rgba(0, 204, 102, 0.05));
+            color: var(--success);
+            border-left-color: var(--success);
+        }
+
+        /* ====== FOOTER ====== */
+        .footer {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 255, 0.85));
+            border-top: 1px solid var(--border);
+            padding: 10px 16px;
+            font-size: 11px;
+            color: var(--text-dim);
             text-align: center;
-            color: #999;
-            padding: 15px;
-            font-size: 0.85em;
+            min-height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 -4px 20px rgba(0, 153, 255, 0.1);
+            position: relative;
+            z-index: 100;
         }
-        
-        .notification-badge {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: #e74c3c;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 1000;
-            animation: slideUp 0.3s ease-out;
+
+        /* ====== NO REC ====== */
+        .no-rec {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-dim);
         }
-        
-        @keyframes slideUp {
-            from {
-                transform: translateY(100px);
-                opacity: 0;
+
+        .no-rec-icon {
+            font-size: 40px;
+            margin-bottom: 8px;
+            opacity: 0.8;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* ====== RESPONSIVE ====== */
+        @media (max-width: 600px) {
+            .header-title {
+                font-size: 16px;
             }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .price-grid {
+
+            .rec-grid {
                 grid-template-columns: 1fr;
             }
-            
-            h1 {
-                font-size: 1.3em;
-            }
-            
-            .controls {
+
+            .stocks-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+
+            .rec-symbol {
+                font-size: 32px;
+            }
+
+            .rec-confidence {
+                font-size: 24px;
             }
         }
     </style>
 </head>
 <body>
+    <svg class="background-canvas" width="100%" height="100%">
+        <!-- Dynamic Candles -->
+        <g id="candles">
+            <rect x="5%" y="20%" width="30" height="60" fill="rgba(0, 204, 102, 0.5)" style="animation: candleUp 3s ease-in-out infinite;"/>
+            <rect x="15%" y="30%" width="30" height="50" fill="rgba(255, 51, 102, 0.4)" style="animation: candleDown 4s ease-in-out infinite;"/>
+            <rect x="25%" y="25%" width="30" height="55" fill="rgba(0, 204, 102, 0.5)" style="animation: candleUp 3.5s ease-in-out infinite;"/>
+            <rect x="35%" y="35%" width="30" height="45" fill="rgba(255, 51, 102, 0.4)" style="animation: candleDown 3s ease-in-out infinite;"/>
+            <rect x="60%" y="15%" width="30" height="70" fill="rgba(0, 204, 102, 0.5)" style="animation: candleUp 4s ease-in-out infinite;"/>
+            <rect x="70%" y="40%" width="30" height="40" fill="rgba(255, 51, 102, 0.4)" style="animation: candleDown 3.5s ease-in-out infinite;"/>
+            <rect x="80%" y="28%" width="30" height="52" fill="rgba(0, 204, 102, 0.5)" style="animation: candleUp 3s ease-in-out infinite;"/>
+            <rect x="90%" y="32%" width="30" height="48" fill="rgba(255, 51, 102, 0.4)" style="animation: candleDown 4s ease-in-out infinite;"/>
+        </g>
+
+        <!-- Floating Particles -->
+        <g id="particles">
+            <circle cx="10%" cy="100%" r="3" fill="rgba(0, 153, 255, 0.5)" style="animation: floatParticle 8s ease-in infinite; animation-delay: 0s;"/>
+            <circle cx="20%" cy="100%" r="2" fill="rgba(0, 204, 102, 0.4)" style="animation: floatParticle 10s ease-in infinite; animation-delay: 1s;"/>
+            <circle cx="30%" cy="100%" r="2" fill="rgba(255, 153, 0, 0.3)" style="animation: floatParticle 9s ease-in infinite; animation-delay: 2s;"/>
+            <circle cx="40%" cy="100%" r="3" fill="rgba(124, 58, 237, 0.4)" style="animation: floatParticle 11s ease-in infinite; animation-delay: 1.5s;"/>
+            <circle cx="50%" cy="100%" r="2" fill="rgba(0, 153, 255, 0.4)" style="animation: floatParticle 8.5s ease-in infinite; animation-delay: 2.5s;"/>
+            <circle cx="60%" cy="100%" r="3" fill="rgba(0, 204, 102, 0.3)" style="animation: floatParticle 10.5s ease-in infinite; animation-delay: 0.5s;"/>
+            <circle cx="70%" cy="100%" r="2" fill="rgba(255, 153, 0, 0.4)" style="animation: floatParticle 9.5s ease-in infinite; animation-delay: 2s;"/>
+            <circle cx="80%" cy="100%" r="3" fill="rgba(124, 58, 237, 0.3)" style="animation: floatParticle 11.5s ease-in infinite; animation-delay: 1s;"/>
+            <circle cx="90%" cy="100%" r="2" fill="rgba(0, 153, 255, 0.3)" style="animation: floatParticle 9s ease-in infinite; animation-delay: 2.5s;"/>
+        </g>
+
+        <!-- Wave Lines -->
+        <path d="M 0,50% Q 25%,40% 50%,50% T 100%,50%" 
+              stroke="rgba(0, 153, 255, 0.25)" stroke-width="2" fill="none" 
+              style="animation: waveMove 6s ease-in-out infinite;"/>
+        <path d="M 0,70% Q 25%,60% 50%,70% T 100%,70%" 
+              stroke="rgba(0, 204, 102, 0.2)" stroke-width="2" fill="none" 
+              style="animation: waveMove 8s ease-in-out infinite; animation-delay: 1s;"/>
+    </svg>
+
     <div class="container">
-        <div class="main">
-            <h1>🎯 Scalping Assistant</h1>
-            
-            <div class="api-setup" id="apiSetup">
-                <button class="api-close" onclick="closeAPISetup()">✕</button>
-                <div style="font-size: 0.85em; margin-bottom: 8px; color: #333;">
-                    <strong>Finnhub API</strong>
-                </div>
-                <input type="text" id="apiKey" placeholder="API Key (اختياري)" />
-                <button onclick="saveAPIKey()">💾 حفظ</button>
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-title">
+                🚀 Scalping Assistant
             </div>
-            
-            <div class="controls">
-                <div class="control">
-                    <label>السهم:</label>
-                    <select id="symbol">
-                        <option value="OKLO">OKLO</option>
-                        <option value="TSLA">TSLA</option>
-                    </select>
-                </div>
-                <div class="control">
-                    <label>الفترة:</label>
-                    <select id="timeframe">
-                        <option value="60">1H</option>
-                        <option value="30">30M</option>
-                        <option value="15">15M</option>
-                        <option value="5">5M</option>
-                    </select>
-                </div>
-                <div class="control">
-                    <label>Confluence:</label>
-                    <select id="confluenceMin">
-                        <option value="3" selected>3.0</option>
-                        <option value="3.5">3.5</option>
-                        <option value="4">4.0</option>
-                    </select>
-                </div>
+            <div class="header-status">
+                <span class="status-dot online"></span>
+                <span id="status-text">جاهز</span>
             </div>
-            
-            <div class="buttons">
-                <button class="btn-start" onclick="startMonitoring()">▶️ ابدأ</button>
-                <button class="btn-stop" onclick="stopMonitoring()">⏹️ توقف</button>
-            </div>
-            
-            <div class="status" id="status">
-                <div><strong>الحالة:</strong> <span id="statusText">⚫ متوقفة</span></div>
-                <div><strong>التحديث:</strong> <span id="lastUpdate">-</span></div>
-            </div>
-            
-            <div class="price-grid">
-                <div class="price-card">
-                    <h3>🔴 OKLO</h3>
-                    <div class="price-info">
-                        <div class="info-row">
-                            <span class="label">السعر:</span>
-                            <span class="value" id="price1">8.50</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">MA9:</span>
-                            <span class="value" id="ma91">8.48</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">MA20:</span>
-                            <span class="value" id="ma201">8.45</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">RSI:</span>
-                            <span class="value" id="rsi1">55.0</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Confluence:</span>
-                            <span class="value" id="conf1">3.5/5</span>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+
+            <!-- RECOMMENDATION SECTION -->
+            <div class="section recommendation-section">
+                <div id="recommendation-container">
+                    <div class="recommendation-card">
+                        <div class="no-rec">
+                            <div class="no-rec-icon">⏳</div>
+                            <div>جاري تحليل الأسهم...</div>
                         </div>
                     </div>
-                    <div id="indicators1"></div>
                 </div>
-                
-                <div class="price-card">
-                    <h3>⚡ TSLA</h3>
-                    <div class="price-info">
-                        <div class="info-row">
-                            <span class="label">السعر:</span>
-                            <span class="value" id="price2">250.00</span>
+            </div>
+
+            <!-- API KEY SECTION -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div class="section-header-title">
+                        🔑 مفتاح Finnhub API
+                    </div>
+                    <div class="section-toggle">▼</div>
+                </div>
+                <div class="section-content">
+                    <div class="form-field full">
+                        <label>أدخل مفتاح API (اختياري)</label>
+                        <input type="password" id="finnhub-key" placeholder="sk_live_..." 
+                               onchange="saveFinnhubKey(this.value)">
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px; line-height: 1.6;">
+                        احصل على مفتاح مجاني من <a href="https://finnhub.io" target="_blank" style="color: var(--primary); text-decoration: none;">finnhub.io</a> 
+                        <br>(60 طلب/دقيقة)
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS SECTION -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div class="section-header-title">
+                        ⚙️ الإعدادات
+                    </div>
+                    <div class="section-toggle">▼</div>
+                </div>
+                <div class="section-content">
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>السهم الأول</label>
+                            <select id="symbol1" onchange="updateSymbol(1, this.value)">
+                                <option value="OKLO">OKLO</option>
+                                <option value="TSLA">TSLA</option>
+                                <option value="NVDA">NVDA</option>
+                                <option value="AAPL">AAPL</option>
+                            </select>
                         </div>
-                        <div class="info-row">
-                            <span class="label">MA9:</span>
-                            <span class="value" id="ma92">249.50</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">MA20:</span>
-                            <span class="value" id="ma202">248.75</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">RSI:</span>
-                            <span class="value" id="rsi2">52.0</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Confluence:</span>
-                            <span class="value" id="conf2">3.2/5</span>
+                        <div class="form-field">
+                            <label>السهم الثاني</label>
+                            <select id="symbol2" onchange="updateSymbol(2, this.value)">
+                                <option value="OKLO">OKLO</option>
+                                <option value="TSLA" selected>TSLA</option>
+                                <option value="NVDA">NVDA</option>
+                                <option value="AAPL">AAPL</option>
+                            </select>
                         </div>
                     </div>
-                    <div id="indicators2"></div>
+
+                    <div class="input-group">
+                        <div class="form-field">
+                            <label>تحديث البيانات (ثانية)</label>
+                            <input type="number" id="interval" value="5" min="1" max="60" onchange="updateInterval(this.value)">
+                        </div>
+                        <div class="form-field">
+                            <label>حد Confluence الأدنى</label>
+                            <select id="confluence-min" onchange="updateConfluence(this.value)">
+                                <option value="1">1 استراتيجية</option>
+                                <option value="2">2 استراتيجية</option>
+                                <option value="3" selected>3 استراتيجيات (آمن)</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="sidebar-tabs">
-                <button class="tab-btn active" onclick="switchTab('checklist')">✅ Checklist</button>
-                <button class="tab-btn" onclick="switchTab('strategy')">📋 استراتيجية</button>
-                <button class="tab-btn" onclick="switchTab('recommendations')">🚀 توصيات</button>
-            </div>
-            
-            <div class="sidebar-card active" id="checklistTab">
-                <h3>✅ Pre-Trade Checklist</h3>
-                <div class="checklist-progress">
-                    <div class="checklist-progress-bar" id="progressBar"></div>
+
+            <!-- STOCKS SECTION -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div class="section-header-title">
+                        📊 أسعار الأسهم
+                    </div>
+                    <div class="section-toggle">▼</div>
                 </div>
-                <ul class="checklist" id="checklist"></ul>
-            </div>
-            
-            <div class="sidebar-card" id="strategyTab">
-                <h3>📋 High-Probability Scalping</h3>
-                <div class="strategy-rules">
-                    <div class="rule good">✅ Entry: MA9 Cross</div>
-                    <div class="rule good">✅ TP1: +0.5%</div>
-                    <div class="rule good">✅ TP2: +0.8%</div>
-                    <div class="rule bad">❌ SL: -0.3%</div>
-                    <div class="rule warning">⚠️ Max 5/يوم</div>
-                    <div class="rule warning">⚠️ Max 2 ساعة</div>
-                    <div class="rule good">✅ W/R: 75%</div>
-                    <div class="rule good">✅ R:R: 1:2</div>
+                <div class="section-content">
+                    <div class="stocks-grid" id="stocks-container">
+                        <!-- يتم ملأها بـ JavaScript -->
+                    </div>
                 </div>
             </div>
-            
-            <div class="sidebar-card" id="recommendationsTab">
-                <h3>🚀 التوصيات الحالية</h3>
-                <div class="recommendations" id="recommendationsList">
-                    <div class="no-recs">انتظر التحليل...</div>
+
+            <!-- CHECKLIST SECTION -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div class="section-header-title">
+                        ✅ Pre-Trade Checklist
+                    </div>
+                    <div class="section-toggle">▼</div>
+                </div>
+                <div class="section-content">
+                    <div class="checklist-items" id="checklist-container">
+                        <!-- يتم ملأها بـ JavaScript -->
+                    </div>
                 </div>
             </div>
+
+            <!-- STRATEGY INFO -->
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <div class="section-header-title">
+                        📘 الاستراتيجيات
+                    </div>
+                    <div class="section-toggle">▼</div>
+                </div>
+                <div class="section-content">
+                    <div style="font-size: 12px; line-height: 2; color: var(--text-dim);">
+                        <div style="margin-bottom: 14px; padding: 10px; border-left: 3px solid var(--primary); background: rgba(0, 153, 255, 0.1);">
+                            <strong style="color: var(--primary);">1. MA Cross</strong><br>
+                            MA9 > MA20 والسعر > MA9
+                        </div>
+                        <div style="margin-bottom: 14px; padding: 10px; border-left: 3px solid var(--warning); background: rgba(255, 153, 0, 0.1);">
+                            <strong style="color: var(--warning);">2. RSI Neutral</strong><br>
+                            RSI بين 40-60
+                        </div>
+                        <div style="padding: 10px; border-left: 3px solid var(--success); background: rgba(0, 204, 102, 0.1);">
+                            <strong style="color: var(--success);">3. Breakout</strong><br>
+                            High كُسر + Volume عالي + RSI > 50
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            آخر تحديث: <span id="last-update" style="color: var(--primary); font-weight: 600;">الآن</span> | 
+            <span style="color: var(--success);">Confluence ≥ 3 = ادخل بثقة</span>
         </div>
     </div>
 
     <script>
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('SW registered'))
-                .catch(err => console.log('SW registration failed:', err));
-        }
-        
-        // Request notifications permission
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
-        }
-        
-        let finnhubApiKey = localStorage.getItem('finnhubApiKey') || '';
-        let isMonitoring = false;
-        let monitoringInterval;
-        const recommendations = [];
-        
-        const basePrices = {
-            'OKLO': 8.50,
-            'TSLA': 250.00
+        // ===== CONFIG =====
+        let config = {
+            symbols: ['OKLO', 'TSLA'],
+            interval: 5000,
+            confluenceMin: 3,
+            finnhubKey: localStorage.getItem('finnhub-key') || ''
         };
-        
-        const checklist = [
-            'السوق مفتوح',
-            'Confluence >= 3',
-            'RSI: 40-60',
-            'MA9 > MA20',
-            'السعر > MA9',
-            'Volume موجود',
-            'رأس مال محدد',
-            'TP محدد',
-            'SL محدد',
-            'تركيز كامل'
-        ];
-        
-        class RealisticPriceSimulator {
-            constructor(symbol) {
-                this.symbol = symbol;
-                this.basePrice = basePrices[symbol];
-                this.price = this.basePrice;
-                this.history = [];
-                
-                for (let i = 0; i < 50; i++) {
-                    this.history.push(this.basePrice * (0.995 + Math.random() * 0.01));
-                }
-                this.history.push(this.price);
-            }
-            
-            update() {
-                const volatility = this.symbol === 'OKLO' ? 0.008 : 0.005;
-                const momentum = (Math.random() - 0.48) * 0.002;
-                const randomWalk = (Math.random() - 0.5) * volatility * this.price;
-                
-                this.price = this.price * (1 + momentum + randomWalk / this.price);
-                this.history.push(this.price);
-                
-                if (this.history.length > 100) this.history.shift();
-            }
-            
-            getMA(period) {
-                if (this.history.length < period) {
-                    return this.history.reduce((a, b) => a + b) / this.history.length;
-                }
-                const sum = this.history.slice(-period).reduce((a, b) => a + b, 0);
-                return sum / period;
-            }
-            
-            getRSI(period = 14) {
-                if (this.history.length < period) return 50;
-                
-                let gains = 0, losses = 0;
-                for (let i = this.history.length - period; i < this.history.length; i++) {
-                    const change = this.history[i] - this.history[i - 1];
-                    if (change > 0) gains += change;
-                    else losses += Math.abs(change);
-                }
-                
-                const avgGain = gains / period;
-                const avgLoss = losses / period;
-                const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
-                
-                return 100 - (100 / (1 + rs));
-            }
+
+        let lastFinnhubFetch = 0;
+        const FINNHUB_RATE_LIMIT = 2000;
+
+        // ===== INITIALIZE =====
+        document.getElementById('finnhub-key').value = config.finnhubKey;
+
+        // ===== TOGGLE SECTIONS =====
+        function toggleSection(header) {
+            const section = header.closest('.section');
+            section.classList.toggle('collapsed');
         }
-        
-        const simulators = {
-            'OKLO': new RealisticPriceSimulator('OKLO'),
-            'TSLA': new RealisticPriceSimulator('TSLA')
-        };
-        
-        function closeAPISetup() {
-            document.getElementById('apiSetup').classList.add('collapsed');
+
+        // ===== SAVE API KEY =====
+        function saveFinnhubKey(key) {
+            config.finnhubKey = key;
+            localStorage.setItem('finnhub-key', key);
         }
-        
-        function saveAPIKey() {
-            const apiKey = document.getElementById('apiKey').value.trim();
-            if (apiKey) {
-                localStorage.setItem('finnhubApiKey', apiKey);
-                finnhubApiKey = apiKey;
-                closeAPISetup();
-            }
+
+        // ===== UPDATE SETTINGS =====
+        function updateSymbol(index, symbol) {
+            config.symbols[index - 1] = symbol;
         }
-        
-        if (finnhubApiKey) {
-            document.getElementById('apiKey').value = finnhubApiKey;
-            closeAPISetup();
+
+        function updateInterval(value) {
+            config.interval = parseInt(value) * 1000;
         }
-        
-        function calculateConfluence(price, ma9, ma20, rsi) {
-            let score = 0;
-            if (ma9 > ma20) score += 1.5;
-            if (40 <= rsi && rsi <= 60) score += 1;
-            if (price > ma9) score += 1;
-            if (rsi < 70 && rsi > 30) score += 0.5;
-            return Math.min(5, score);
+
+        function updateConfluence(value) {
+            config.confluenceMin = parseInt(value);
         }
-        
-        function generateRecommendation(symbol, price, ma9, ma20, rsi, confluence) {
-            if (confluence < 3) return null;
-            
-            const entry = parseFloat(price.toFixed(2));
-            const tp1 = parseFloat((price * 1.005).toFixed(2));
-            const tp2 = parseFloat((price * 1.008).toFixed(2));
-            const sl = parseFloat((price * 0.997).toFixed(2));
-            const rr = ((tp2 - entry) / (entry - sl)).toFixed(2);
+
+        // ===== SIMULATE PRICE DATA =====
+        function generateMockData(symbol) {
+            const basePrice = { 'OKLO': 8.50, 'TSLA': 238, 'NVDA': 132, 'AAPL': 225 };
+            const base = basePrice[symbol] || 100;
+            const random = (1 + (Math.random() - 0.5) * 0.02);
+            const price = base * random;
+            const ma9 = price * (1 + (Math.random() - 0.5) * 0.005);
+            const ma20 = price * (1 + (Math.random() - 0.5) * 0.01);
+            const rsi = 30 + Math.random() * 40;
+            const high = price * (1 + Math.random() * 0.01);
             
             return {
                 symbol,
-                entry,
-                tp1,
-                tp2,
-                sl,
-                rr,
-                confidence: (confluence / 5 * 100).toFixed(0),
-                timestamp: new Date().toLocaleTimeString('ar-SA')
+                price: price.toFixed(2),
+                ma9: ma9.toFixed(2),
+                ma20: ma20.toFixed(2),
+                rsi: rsi.toFixed(0),
+                high: high.toFixed(2),
+                volume: Math.floor(Math.random() * 10000000),
+                timestamp: new Date().toLocaleTimeString('ar-AE')
             };
         }
-        
-        function updateRecommendations() {
-            const confluenceMin = parseFloat(document.getElementById('confluenceMin').value);
-            const oldRecs = recommendations.length;
-            recommendations.length = 0;
-            
-            for (const sym of ['OKLO', 'TSLA']) {
-                const sim = simulators[sym];
-                const price = sim.price;
-                const ma9 = sim.getMA(9);
-                const ma20 = sim.getMA(20);
-                const rsi = sim.getRSI();
-                const confluence = calculateConfluence(price, ma9, ma20, rsi);
-                
-                if (confluence >= confluenceMin) {
-                    const rec = generateRecommendation(sym, price, ma9, ma20, rsi, confluence);
-                    if (rec) {
-                        recommendations.push(rec);
-                        
-                        // تنبيه إذا كانت توصية جديدة
-                        if (oldRecs < recommendations.length && isMonitoring) {
-                            sendNotification(rec);
-                        }
-                    }
-                }
+
+        // ===== GENERATE RECOMMENDATIONS =====
+        function generateRecommendation(data) {
+            const price = parseFloat(data.price);
+            const ma9 = parseFloat(data.ma9);
+            const ma20 = parseFloat(data.ma20);
+            const rsi = parseFloat(data.rsi);
+            const high = parseFloat(data.high);
+
+            let confluence = 0;
+            let strategies = [];
+
+            if (ma9 > ma20 && price > ma9) {
+                confluence++;
+                strategies.push('MA Cross');
             }
-            
-            renderRecommendations();
-        }
-        
-        function sendNotification(rec) {
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('🚀 توصية تداول جديدة', {
-                    body: `${rec.symbol}: الدخول ${rec.entry}، الهدف ${rec.tp2}، الخسارة ${rec.sl}`,
-                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect fill="%23667eea" width="192" height="192"/><text x="96" y="96" font-size="60" fill="%23fff" text-anchor="middle" dy=".3em">🎯</text></svg>',
-                    tag: 'scalping-' + rec.symbol,
-                    requireInteraction: true
-                });
+
+            if (rsi >= 40 && rsi <= 60) {
+                confluence++;
+                strategies.push('RSI Neutral');
             }
+
+            if (price >= high * 0.99 && rsi > 50) {
+                confluence++;
+                strategies.push('Breakout');
+            }
+
+            if (confluence >= config.confluenceMin) {
+                const tp1 = (price * 1.005).toFixed(2);
+                const tp2 = (price * 1.008).toFixed(2);
+                const sl = (price * 0.997).toFixed(2);
+                const rr = ((tp2 - price) / (price - sl)).toFixed(2);
+                const confidence = (60 + confluence * 10).toString();
+
+                return {
+                    symbol: data.symbol,
+                    strategy: strategies[0],
+                    confidence,
+                    entry: price.toFixed(2),
+                    tp1,
+                    tp2,
+                    sl,
+                    rr,
+                    direction: 'BUY',
+                    confluence
+                };
+            }
+
+            return null;
         }
-        
-        function renderRecommendations() {
-            const list = document.getElementById('recommendationsList');
-            
-            if (recommendations.length === 0) {
-                list.innerHTML = '<div class="no-recs">لا توجد توصيات حالياً</div>';
+
+        // ===== RENDER RECOMMENDATION =====
+        function renderRecommendation(rec) {
+            if (!rec) {
+                document.getElementById('recommendation-container').innerHTML = `
+                    <div class="recommendation-card">
+                        <div class="no-rec">
+                            <div class="no-rec-icon">⏳</div>
+                            <div>لا توجد توصية حالياً</div>
+                            <div style="font-size: 11px; margin-top: 8px; color: var(--text-dim);">
+                                Confluence < ${config.confluenceMin}
+                            </div>
+                        </div>
+                    </div>
+                `;
                 return;
             }
-            
-            list.innerHTML = recommendations.map(rec => `
-                <div class="rec-card">
-                    <div class="rec-header">
-                        <div class="rec-symbol">${rec.symbol}</div>
-                        <div class="rec-confidence">ثقة: ${rec.confidence}%</div>
+
+            const html = `
+                <div class="recommendation-card">
+                    <div class="rec-symbol">🚀 ${rec.symbol}</div>
+                    <div class="rec-strategy">${rec.strategy}</div>
+                    <div class="rec-confidence">${rec.confidence}% ثقة</div>
+                    
+                    <div class="rec-grid">
+                        <div class="rec-item">
+                            <div class="rec-item-label">الدخول</div>
+                            <div class="rec-item-value">${rec.entry}</div>
+                        </div>
+                        <div class="rec-item positive">
+                            <div class="rec-item-label">TP1 (+0.5%)</div>
+                            <div class="rec-item-value">${rec.tp1}</div>
+                        </div>
+                        <div class="rec-item positive">
+                            <div class="rec-item-label">TP2 (+0.8%)</div>
+                            <div class="rec-item-value">${rec.tp2}</div>
+                        </div>
+                        <div class="rec-item negative">
+                            <div class="rec-item-label">SL (-0.3%)</div>
+                            <div class="rec-item-value">${rec.sl}</div>
+                        </div>
+                        <div class="rec-item neutral">
+                            <div class="rec-item-label">R:R</div>
+                            <div class="rec-item-value">1:${rec.rr}</div>
+                        </div>
+                        <div class="rec-item">
+                            <div class="rec-item-label">Confluence</div>
+                            <div class="rec-item-value">${rec.confluence}/3</div>
+                        </div>
                     </div>
-                    <div class="rec-info">
-                        <div class="rec-row">
-                            <div class="rec-label">الدخول:</div>
-                            <div class="rec-value entry">${rec.entry}</div>
+
+                    <div class="rec-action">
+                        <button class="btn-action btn-buy"><span>شراء الآن</span></button>
+                        <button class="btn-action btn-skip"><span>تخطي</span></button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('recommendation-container').innerHTML = html;
+        }
+
+        // ===== RENDER STOCKS =====
+        function renderStocks(allData) {
+            const container = document.getElementById('stocks-container');
+            container.innerHTML = allData.map(data => `
+                <div class="stock-card">
+                    <div class="stock-symbol">${data.symbol}</div>
+                    <div class="stock-price">💵 ${data.price}</div>
+                    <div class="stock-stats">
+                        <div class="stat-item">
+                            <strong>MA9</strong><br>${data.ma9}
                         </div>
-                        <div class="rec-row">
-                            <div class="rec-label">TP1:</div>
-                            <div class="rec-value tp">${rec.tp1}</div>
+                        <div class="stat-item">
+                            <strong>MA20</strong><br>${data.ma20}
                         </div>
-                        <div class="rec-row">
-                            <div class="rec-label">TP2:</div>
-                            <div class="rec-value tp">${rec.tp2}</div>
+                        <div class="stat-item">
+                            <strong>RSI</strong><br>${data.rsi}
                         </div>
-                        <div class="rec-row">
-                            <div class="rec-label">SL:</div>
-                            <div class="rec-value sl">${rec.sl}</div>
-                        </div>
-                        <div class="rec-row">
-                            <div class="rec-label">R:R:</div>
-                            <div class="rec-value">1:${rec.rr}</div>
+                        <div class="stat-item">
+                            <strong>Vol</strong><br>${(data.volume / 1000000).toFixed(1)}M
                         </div>
                     </div>
                 </div>
             `).join('');
         }
-        
-        function initChecklist() {
-            const checklistEl = document.getElementById('checklist');
-            checklistEl.innerHTML = checklist.map((item, idx) => `
-                <li><span>✅</span><span>${item}</span></li>
+
+        // ===== RENDER CHECKLIST =====
+        function renderChecklist() {
+            const items = [
+                { label: 'السوق مفتوح', id: 'market-open' },
+                { label: 'Confluence ≥ 3', id: 'confluence' },
+                { label: 'RSI بين 40-60', id: 'rsi-neutral' },
+                { label: 'MA9 > MA20', id: 'ma-cross' },
+                { label: 'السعر > MA9', id: 'price-above-ma' },
+                { label: 'Volume موجود', id: 'volume' },
+                { label: 'رأس مال محدد', id: 'capital' },
+                { label: 'TP محدد', id: 'tp' },
+                { label: 'SL محدد', id: 'sl' },
+                { label: 'تركيز كامل', id: 'focus' }
+            ];
+
+            const container = document.getElementById('checklist-container');
+            container.innerHTML = items.map(item => `
+                <div class="checklist-item" id="check-${item.id}">
+                    <input type="checkbox" onchange="updateChecklist(this)">
+                    <span>${item.label}</span>
+                </div>
             `).join('');
-            updateChecklistProgress();
         }
-        
-        function updateChecklistProgress() {
-            const progress = (checklist.length / checklist.length * 100);
-            document.getElementById('progressBar').style.width = progress + '%';
+
+        function updateChecklist(checkbox) {
+            const item = checkbox.closest('.checklist-item');
+            item.classList.toggle('checked');
         }
-        
-        function switchTab(tab) {
-            document.querySelectorAll('.sidebar-card').forEach(card => card.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            
-            document.getElementById(tab + 'Tab').classList.add('active');
-            event.target.classList.add('active');
-        }
-        
-        function startMonitoring() {
-            if (isMonitoring) return;
-            isMonitoring = true;
-            
-            const status = document.getElementById('status');
-            status.classList.add('status-running');
-            document.getElementById('statusText').textContent = '🟢 قيد المراقبة';
-            
-            monitoringInterval = setInterval(updateMonitoring, 1000);
-            updateMonitoring();
-        }
-        
-        function stopMonitoring() {
-            isMonitoring = false;
-            clearInterval(monitoringInterval);
-            
-            const status = document.getElementById('status');
-            status.classList.remove('status-running');
-            document.getElementById('statusText').textContent = '⚫ متوقفة';
-        }
-        
-        function updateMonitoring() {
-            for (const sym of ['OKLO', 'TSLA']) {
-                const sim = simulators[sym];
-                sim.update();
-                
-                const price = sim.price;
-                const ma9 = sim.getMA(9);
-                const ma20 = sim.getMA(20);
-                const rsi = sim.getRSI();
-                const confluence = calculateConfluence(price, ma9, ma20, rsi);
-                
-                const cardNum = sym === 'OKLO' ? '1' : '2';
-                
-                document.getElementById(`price${cardNum}`).textContent = price.toFixed(2);
-                document.getElementById(`ma9${cardNum}`).textContent = ma9.toFixed(2);
-                document.getElementById(`ma20${cardNum}`).textContent = ma20.toFixed(2);
-                document.getElementById(`rsi${cardNum}`).textContent = rsi.toFixed(1);
-                document.getElementById(`conf${cardNum}`).textContent = confluence.toFixed(1) + '/5';
-                
-                const indicators = document.getElementById(`indicators${cardNum}`);
-                indicators.innerHTML = `
-                    <div class="indicator ${confluence >= 3 ? 'indicator-good' : 'indicator-bad'}">
-                        ${confluence >= 3 ? '✅ توصية' : '❌ انتظر'}
-                    </div>
-                `;
+
+        // ===== MAIN LOOP =====
+        async function updateData() {
+            const allData = [];
+            let bestRec = null;
+
+            for (const symbol of config.symbols) {
+                const mockData = generateMockData(symbol);
+                allData.push(mockData);
+
+                const rec = generateRecommendation(mockData);
+                if (rec && (!bestRec || rec.confluence > bestRec.confluence)) {
+                    bestRec = rec;
+                }
             }
-            
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('ar-SA');
-            updateRecommendations();
+
+            renderStocks(allData);
+            renderRecommendation(bestRec);
+
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ar-AE');
         }
-        
-        // Initialize
-        initChecklist();
-        updateMonitoring();
+
+        // ===== INIT =====
+        renderChecklist();
+        updateData();
+        setInterval(updateData, config.interval);
     </script>
 </body>
 </html>
