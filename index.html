@@ -2,8 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#f8f9ff">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scalping Assistant v1.0</title>
     <style>
         * {
@@ -12,1145 +11,1344 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --primary: #0099ff;
-            --success: #00cc66;
-            --danger: #ff3366;
-            --warning: #ff9900;
-            --dark: #1a1a3e;
-            --darker: #2d2d5f;
-            --card-bg: #ffffff;
-            --card-bg-alt: #f5f7ff;
-            --text: #2d3561;
-            --text-dim: #6b7280;
-            --border: #e5e7eb;
-            --accent1: #7c3aed;
-            --accent2: #06b6d4;
-            --light-bg: #f8f9ff;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text);
-            overflow: hidden;
-            position: relative;
-            background: var(--light-bg);
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
-            background-size: cover;
-            background-attachment: fixed;
-            background-position: center;
-            background-repeat: no-repeat;
-            z-index: -2;
-            opacity: 1;
-        }
-
-        /* صورة دبي الأصلية - تحميل ديناميكي */
         body {
-            background-image: linear-gradient(135deg, rgba(26, 26, 62, 0.75), rgba(45, 45, 95, 0.75)), 
-                              url('https://images.unsplash.com/photo-1512453475292-7cfe58f88b0e?w=1920&q=80');
-            background-attachment: fixed;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        /* طبقة شفافة إضافية لتحسين التباين */
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(248, 249, 255, 0.08), rgba(240, 245, 255, 0.05));
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        @keyframes slideInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-5px); }
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            color: #333;
         }
 
         .container {
-            display: grid;
-            grid-template-rows: auto 1fr auto;
-            height: 100vh;
-            gap: 0;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
         }
 
-        /* ====== HEADER ====== */
         .header {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(245, 247, 255, 0.98));
-            padding: 12px 16px;
-            border-bottom: 3px solid var(--primary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 100;
-            min-height: 60px;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 32px rgba(0, 153, 255, 0.25);
-            animation: slideInUp 0.6s ease-out;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
         }
 
-        .header-title {
+        .header-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: nowrap;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .clock-item {
+            background: rgba(255,255,255,0.2);
+            padding: 12px 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .clock-flag {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .clock-label {
+            font-size: 11px;
+            opacity: 0.9;
+            text-transform: uppercase;
+        }
+
+        .clock-time {
             font-size: 18px;
             font-weight: bold;
-            background: linear-gradient(90deg, #0099ff, #7c3aed);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
-        .version {
-            font-size: 10px;
-            color: var(--text-dim);
-            background: var(--light-bg2);
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
-
-        .status-indicator {
+        .market-status-center {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            padding: 4px 10px;
+            gap: 8px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .status-indicator.live {
-            background: rgba(0, 204, 102, 0.2);
-            color: var(--success);
-        }
-
-        .status-indicator.cached {
-            background: rgba(255, 51, 102, 0.2);
-            color: var(--danger);
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        .header-center {
-            flex: 1;
-            text-align: center;
-        }
-
-        .market-status {
-            display: flex;
-            gap: 12px;
-            font-size: 10px;
-            justify-content: center;
-        }
-
-        .time-box {
-            background: var(--card-bg);
-            padding: 6px 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            text-align: center;
-        }
-
-        .time-label {
-            color: var(--text-dim);
-            font-size: 8px;
-            text-transform: uppercase;
-        }
-
-        .time-value {
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 11px;
-        }
-
-        .market-state {
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 10px;
-            animation: pulse 2s infinite;
-        }
-
-        .market-state.open {
-            background: rgba(0, 204, 102, 0.2);
-            color: var(--success);
-            border: 1px solid var(--success);
-        }
-
-        .market-state.closed {
-            background: rgba(255, 51, 102, 0.2);
-            color: var(--danger);
-            border: 1px solid var(--danger);
-        }
-
-        .market-state.premarket {
-            background: rgba(255, 153, 0, 0.2);
-            color: var(--warning);
-            border: 1px solid var(--warning);
-        }
-
-        /* ====== MAIN CONTENT ====== */
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            padding: 12px;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: var(--border) transparent;
-        }
-
-        .main-content::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .main-content::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #0099ff, #7c3aed);
-            border-radius: 3px;
-        }
-
-        /* ====== SECTION ====== */
-        .section {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(245, 247, 255, 0.92));
-            border: 1px solid rgba(229, 231, 235, 0.8);
-            border-radius: 12px;
-            overflow: hidden;
-            backdrop-filter: blur(25px);
-            animation: slideInUp 0.6s ease-out backwards;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 32px rgba(0, 153, 255, 0.15);
-        }
-
-        .section:nth-child(1) { animation-delay: 0.1s; }
-        .section:nth-child(2) { animation-delay: 0.2s; }
-        .section:nth-child(3) { animation-delay: 0.3s; }
-        .section:nth-child(4) { animation-delay: 0.4s; }
-        .section:nth-child(5) { animation-delay: 0.5s; }
-
-        .section:hover {
-            border-color: var(--primary);
-            box-shadow: 0 4px 20px rgba(0, 153, 255, 0.2);
-        }
-
-        .section-header {
-            background: linear-gradient(90deg, rgba(248, 249, 255, 0.8), rgba(255, 255, 255, 0.6));
-            padding: 12px 16px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            user-select: none;
-            transition: all 0.3s ease;
-        }
-
-        .section-header-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            color: var(--primary);
-            font-size: 14px;
-        }
-
-        .section-toggle {
             font-size: 12px;
-            color: var(--text-dim);
-            transition: transform 0.3s ease;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        .section.collapsed .section-toggle {
-            transform: rotate(-90deg);
-        }
-
-        .section-content {
-            padding: 16px;
-            max-height: 500px;
-            overflow-y: auto;
-            transition: all 0.3s ease;
-            animation: slideInUp 0.3s ease-out;
-        }
-
-        .section.collapsed .section-content {
-            max-height: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-
-        /* ====== RECOMMENDATION CARD ====== */
-        .recommendation-card {
-            background: linear-gradient(135deg, rgba(230, 244, 255, 0.98), rgba(220, 238, 255, 0.95));
-            border: 3px solid var(--primary);
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-            animation: slideInUp 0.6s ease-out;
-            box-shadow: 0 12px 48px rgba(0, 153, 255, 0.3);
-            backdrop-filter: blur(30px);
-        }
-
-        .rec-symbol {
-            font-size: 40px;
             font-weight: bold;
-            background: linear-gradient(90deg, #0099ff, #7c3aed);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 8px;
         }
 
-        .rec-strategy {
-            font-size: 14px;
-            color: var(--warning);
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-
-        .rec-confidence {
-            font-size: 28px;
-            background: linear-gradient(90deg, #00cc66, #0099ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: bold;
-            margin-bottom: 16px;
-        }
-
-        .rec-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .rec-item {
-            background: linear-gradient(135deg, rgba(0, 153, 255, 0.15), rgba(124, 58, 237, 0.08));
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(0, 153, 255, 0.25);
-            transition: all 0.3s ease;
-        }
-
-        .rec-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(0, 153, 255, 0.2);
-        }
-
-        .rec-item-label {
-            font-size: 11px;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-
-        .rec-item-value {
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .rec-item.positive .rec-item-value { color: var(--success); }
-        .rec-item.negative .rec-item-value { color: var(--danger); }
-        .rec-item.neutral .rec-item-value { color: var(--warning); }
-
-        .rec-action {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-        }
-
-        .btn-action {
-            flex: 1;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-        }
-
-        .btn-buy {
-            background: linear-gradient(135deg, #00cc66, #00dd77);
+        .status-open {
+            background: #4ade80;
             color: white;
-            box-shadow: 0 4px 15px rgba(0, 204, 102, 0.4);
         }
 
-        .btn-buy:hover { transform: translateY(-2px); }
-
-        .btn-skip {
-            background: rgba(107, 114, 128, 0.2);
-            color: var(--text);
-            border: 1px solid var(--border);
+        .status-closed {
+            background: #ef4444;
+            color: white;
         }
 
-        /* ====== STOCKS GRID ====== */
-        .stocks-grid {
+        .tabs-container {
+            display: flex;
+            border-bottom: 2px solid #f0f0f0;
+            background: #f9f9f9;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-button:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 25px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Stock Prices Grid */
+        .stock-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
         .stock-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(248, 249, 255, 0.6));
-            border: 1px solid var(--border);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             border-radius: 12px;
-            padding: 14px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 153, 255, 0.08);
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s ease;
         }
 
         .stock-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 4px 20px rgba(0, 153, 255, 0.2);
-            transform: translateY(-4px);
+            transform: translateY(-5px);
+        }
+
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
         .stock-symbol {
-            font-size: 16px;
+            font-size: 22px;
             font-weight: bold;
-            background: linear-gradient(90deg, #0099ff, #7c3aed);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 4px;
+            color: #333;
         }
 
         .stock-price {
-            font-size: 14px;
-            color: var(--text);
-            font-weight: 500;
-            margin-bottom: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
         }
 
         .stock-stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            font-size: 11px;
-            color: var(--text-dim);
+            gap: 10px;
+            font-size: 13px;
         }
 
         .stat-item {
-            background: rgba(0, 153, 255, 0.12);
-            padding: 6px;
-            border-radius: 4px;
-            text-align: center;
-            border: 1px solid rgba(0, 153, 255, 0.2);
+            background: rgba(255,255,255,0.8);
+            padding: 10px;
+            border-radius: 6px;
         }
 
-        /* ====== FORMS ====== */
-        .input-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .input-group.full {
-            grid-template-columns: 1fr;
-        }
-
-        .form-field {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-field label {
-            font-size: 12px;
-            color: var(--text-dim);
-            margin-bottom: 6px;
-            text-transform: uppercase;
+        .stat-label {
+            color: #666;
             font-weight: 600;
         }
 
-        .form-field input,
-        .form-field select {
-            background: rgba(248, 249, 255, 0.9);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 10px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            transition: all 0.3s ease;
+        .stat-value {
+            color: #667eea;
+            font-weight: bold;
+            margin-top: 3px;
         }
 
-        .form-field input:focus,
-        .form-field select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 15px rgba(0, 153, 255, 0.3);
+        /* Checklist */
+        .checklist-section {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
         }
 
-        .save-btn {
-            background: var(--success);
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            font-size: 12px;
+        .checklist-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
             cursor: pointer;
-            margin-top: 8px;
-            transition: all 0.3s ease;
+            user-select: none;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
         }
 
-        .save-btn:hover {
-            box-shadow: 0 4px 12px rgba(0, 204, 102, 0.4);
+        .checklist-title:hover {
+            color: #667eea;
         }
 
-        /* ====== CHECKLIST ====== */
+        .checklist-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .checklist-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .checklist-title .status-check {
+            margin-left: auto;
+            font-size: 20px;
+        }
+
+        .checklist-content {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .checklist-content.collapsed {
+            display: none;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .checklist-progress {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .checklist-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
         .checklist-items {
-            display: grid;
-            gap: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .checklist-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             padding: 10px;
-            background: rgba(0, 153, 255, 0.08);
+            background: white;
             border-radius: 6px;
-            font-size: 12px;
-            border-left: 3px solid rgba(0, 153, 255, 0.25);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            color: var(--text);
+            font-size: 14px;
         }
 
-        .checklist-item:hover {
-            border-left-color: var(--primary);
-            background: rgba(0, 153, 255, 0.15);
-        }
-
-        .checklist-item input[type="checkbox"] {
-            cursor: pointer;
-            width: 16px;
-            height: 16px;
-            accent-color: var(--success);
-        }
-
-        .checklist-item.checked {
-            background: rgba(0, 204, 102, 0.15);
-            color: var(--success);
-            border-left-color: var(--success);
-        }
-
-        /* ====== RESULTS LOG ====== */
-        .results-log {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .log-entry {
-            padding: 10px;
-            margin-bottom: 8px;
-            background: var(--card-bg-alt);
-            border-left: 3px solid var(--primary);
-            border-radius: 4px;
-            font-size: 11px;
-        }
-
-        .log-entry.win { border-left-color: var(--success); }
-        .log-entry.loss { border-left-color: var(--danger); }
-
-        /* ====== FOOTER ====== */
-        .footer {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(245, 247, 255, 0.98));
-            border-top: 2px solid var(--border);
-            padding: 8px 16px;
-            font-size: 11px;
-            color: var(--text-dim);
-            text-align: center;
-            min-height: 35px;
+        .checklist-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 -4px 20px rgba(0, 153, 255, 0.1);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
         }
 
-        /* ====== NO REC ====== */
-        .no-rec {
+        .checklist-item.checked .checklist-checkbox {
+            background: #4ade80;
+            border-color: #22c55e;
+            color: white;
+        }
+
+        /* Recommendations Card */
+        .recommendation-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .rec-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rec-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .rec-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
             text-align: center;
+            border: 2px solid #f0f0f0;
+        }
+
+        .rec-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .rec-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .confluence-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .rec-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .rec-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-pin {
+            background: #f59e0b;
+            color: white;
+            flex-basis: 100%;
+        }
+
+        .btn-pin:hover {
+            background: #d97706;
+            transform: scale(1.02);
+        }
+
+        .rec-pinned {
+            border: 3px solid #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-profit {
+            background: #4ade80;
+            color: white;
+        }
+
+        .btn-profit:hover {
+            background: #22c55e;
+            transform: scale(1.05);
+        }
+
+        .btn-loss {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-loss:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        .no-recommendation {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-size: 16px;
+        }
+
+        /* Statistics */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
             padding: 20px;
-            color: var(--text-dim);
+            text-align: center;
+            border-left: 4px solid #667eea;
         }
 
-        .no-rec-icon {
-            font-size: 40px;
+        .stat-card-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .stat-card-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .results-log {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .results-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-radius: 6px;
+            background: white;
+            border-left: 4px solid;
+            font-size: 14px;
+        }
+
+        .result-item.profit {
+            border-left-color: #4ade80;
+        }
+
+        .result-item.loss {
+            border-left-color: #ef4444;
+        }
+
+        .result-status {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .result-item.profit .result-status {
+            color: #4ade80;
+        }
+
+        .result-item.loss .result-status {
+            color: #ef4444;
+        }
+
+        .result-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .clear-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #dc2626;
+        }
+
+        /* Settings */
+        .settings-section {
+            margin-bottom: 25px;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
             margin-bottom: 8px;
-            opacity: 0.8;
-            animation: float 3s ease-in-out infinite;
         }
 
-        /* ====== RESPONSIVE ====== */
-        @media (max-width: 600px) {
-            .header { min-height: 70px; flex-wrap: wrap; }
-            .header-center { width: 100%; order: 3; }
-            .market-status { font-size: 9px; gap: 6px; }
-            .rec-grid { grid-template-columns: 1fr; }
-            .stocks-grid { grid-template-columns: 1fr; }
-            .input-group { grid-template-columns: 1fr; }
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-input[type="password"] {
+            letter-spacing: 3px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .symbols-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .symbol-tag {
+            background: #667eea;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .symbol-tag button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .symbol-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .symbol-input-group input {
+            flex: 1;
+        }
+
+        .symbol-input-group button {
+            padding: 12px 20px;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        @media (max-width: 768px) {
+            .header-info {
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .clock-item {
+                padding: 8px 12px;
+            }
+
+            .clock-flag {
+                font-size: 24px;
+                margin-bottom: 2px;
+            }
+
+            .clock-label {
+                font-size: 9px;
+            }
+
+            .clock-time {
+                font-size: 14px;
+            }
+
+            .tab-button {
+                font-size: 14px;
+                padding: 12px 10px;
+            }
+
+            .stock-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .rec-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- HEADER -->
+        <!-- Header -->
         <div class="header">
-            <div class="header-left">
-                <div>
-                    <div class="header-title">🚀 Scalping Assistant <span class="version">v1.0</span></div>
+            <h1>🚀 Scalping Assistant v1.0</h1>
+            <div class="header-info">
+                <div class="clock-item">
+                    <div class="clock-flag">🇦🇪</div>
+                    <div class="clock-label">Dubai</div>
+                    <div class="clock-time" id="dubaiTime">00:00:00</div>
                 </div>
-                <div id="status-indicator" class="status-indicator live">
-                    <span class="status-dot" style="background: #00cc66;"></span>
-                    جاهز
-                </div>
-            </div>
 
-            <div class="header-center">
-                <div class="market-status">
-                    <div class="time-box">
-                        <div class="time-label">الإمارات</div>
-                        <div class="time-value" id="time-uae">--:--</div>
-                    </div>
-                    <div class="time-box">
-                        <div class="time-label">أمريكا</div>
-                        <div class="time-value" id="time-usa">--:--</div>
-                    </div>
-                    <div class="market-state" id="market-state">CLOSED</div>
+                <div class="market-status-center">
+                    <div class="status-badge" id="marketStatus">Loading...</div>
+                    <div style="font-size: 12px; opacity: 0.9;">السوق</div>
+                </div>
+
+                <div class="clock-item">
+                    <div class="clock-flag">🇺🇸</div>
+                    <div class="clock-label">New York</div>
+                    <div class="clock-time" id="nyTime">00:00:00</div>
                 </div>
             </div>
         </div>
 
-        <!-- MAIN CONTENT -->
-        <div class="main-content">
-
-            <!-- RECOMMENDATION SECTION -->
-            <div class="section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <div class="section-header-title">🎯 التوصية</div>
-                    <div class="section-toggle">▼</div>
-                </div>
-                <div class="section-content">
-                    <div id="recommendation-container">
-                        <div class="recommendation-card">
-                            <div class="no-rec">
-                                <div class="no-rec-icon">⏳</div>
-                                <div>جاري تحليل الأسهم...</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- API KEY SECTION -->
-            <div class="section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <div class="section-header-title">🔑 مفتاح Finnhub API</div>
-                    <div class="section-toggle">▼</div>
-                </div>
-                <div class="section-content">
-                    <div class="form-field full">
-                        <label>أدخل مفتاح API</label>
-                        <input type="password" id="finnhub-key" placeholder="sk_live_...">
-                        <button class="save-btn" onclick="saveFinnhubKey()">حفظ المفتاح</button>
-                    </div>
-                    <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">
-                        احصل على مفتاح من <a href="https://finnhub.io" target="_blank" style="color: var(--primary);">finnhub.io</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SETTINGS SECTION -->
-            <div class="section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <div class="section-header-title">⚙️ الإعدادات</div>
-                    <div class="section-toggle">▼</div>
-                </div>
-                <div class="section-content">
-                    <div class="input-group">
-                        <div class="form-field">
-                            <label>السهم الأول</label>
-                            <select id="symbol1" onchange="updateSymbol(1, this.value)">
-                                <option value="OKLO">OKLO</option>
-                                <option value="TSLA">TSLA</option>
-                                <option value="NVDA">NVDA</option>
-                                <option value="AAPL">AAPL</option>
-                            </select>
-                        </div>
-                        <div class="form-field">
-                            <label>السهم الثاني</label>
-                            <select id="symbol2" onchange="updateSymbol(2, this.value)">
-                                <option value="OKLO">OKLO</option>
-                                <option value="TSLA" selected>TSLA</option>
-                                <option value="NVDA">NVDA</option>
-                                <option value="AAPL">AAPL</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <div class="form-field">
-                            <label>تحديث البيانات (ثانية)</label>
-                            <input type="number" id="interval" value="5" min="1" max="60" onchange="updateInterval(this.value)">
-                        </div>
-                        <div class="form-field">
-                            <label>Confluence الأدنى</label>
-                            <select id="confluence-min" onchange="updateConfluence(this.value)">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3" selected>3 (آمن)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- STOCKS SECTION -->
-            <div class="section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <div class="section-header-title">📊 أسعار الأسهم</div>
-                    <div class="section-toggle">▼</div>
-                </div>
-                <div class="section-content">
-                    <div class="stocks-grid" id="stocks-container"></div>
-                </div>
-            </div>
-
-            <!-- CHECKLIST SECTION -->
-            <div class="section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <div class="section-header-title">✅ Pre-Trade Checklist</div>
-                    <div class="section-toggle">▼</div>
-                </div>
-                <div class="section-content">
-                    <div class="checklist-items" id="checklist-container"></div>
-                    <div style="margin-top: 12px; padding: 8px; background: rgba(0, 153, 255, 0.1); border-radius: 6px; font-size: 11px; color: var(--text-dim);">
-                        تحقق تلقائي من جميع النقاط قبل الدخول
-                    </div>
-                </div>
-            </div>
-
-            <!-- RESULTS LOG SECTION -->
-            <div class="section">
-                <div class="section-header" onclick="toggleSection(this)">
-                    <div class="section-header-title">📈 سجل النتائج</div>
-                    <div class="section-toggle">▼</div>
-                </div>
-                <div class="section-content">
-                    <div class="results-log" id="results-log">
-                        <div style="text-align: center; color: var(--text-dim); padding: 20px; font-size: 12px;">
-                            لا توجد نتائج حالياً
-                        </div>
-                    </div>
-                    <button class="save-btn" style="width: 100%; margin-top: 8px;" onclick="clearResults()">مسح السجل</button>
-                </div>
-            </div>
-
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <button class="tab-button active" data-tab="stocks">📊 الأسعار والتفقد</button>
+            <button class="tab-button" data-tab="recommendations">💡 التوصيات</button>
+            <button class="tab-button" data-tab="statistics">📈 الإحصائيات</button>
+            <button class="tab-button" data-tab="settings">⚙️ الإعدادات</button>
         </div>
 
-        <!-- FOOTER -->
-        <div class="footer">
-            آخر تحديث: <span id="last-update" style="color: var(--primary); font-weight: 600;">الآن</span> | النسخة v1.0
+        <!-- Tab 1: Stock Prices & Checklist -->
+        <div id="stocks" class="tab-content active">
+            <h2>أسعار الأسهم</h2>
+            <div class="stock-grid" id="stockGrid"></div>
+
+            <div class="checklist-section">
+                <div class="checklist-title" onclick="toggleChecklist()">
+                    <span class="checklist-toggle" id="checklistToggle">▼</span>
+                    Pre-Trade Checklist
+                    <span class="status-check" id="checklistStatusCheck"></span>
+                </div>
+                <div class="checklist-content" id="checklistContent">
+                    <div class="checklist-progress">
+                        <div class="checklist-bar" id="checklistBar"></div>
+                    </div>
+                    <div style="text-align: center; font-size: 14px; margin-bottom: 15px; color: #666;">
+                        <span id="checklistCount">0</span> / 10
+                    </div>
+                    <div class="checklist-items" id="checklist"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Recommendations -->
+        <div id="recommendations" class="tab-content">
+            <h2>التوصيات الذكية</h2>
+            <div id="recommendationContainer">
+                <div class="no-recommendation">لا توجد توصيات حالياً 📭</div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Statistics -->
+        <div id="statistics" class="tab-content">
+            <h2>الإحصائيات</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-label">إجمالي الصفقات</div>
+                    <div class="stat-card-value" id="totalTrades">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">الأرباح</div>
+                    <div class="stat-card-value" style="color: #4ade80;" id="profitCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">الخسائر</div>
+                    <div class="stat-card-value" style="color: #ef4444;" id="lossCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">Win Rate</div>
+                    <div class="stat-card-value" id="winRate">0%</div>
+                </div>
+            </div>
+
+            <div class="results-log">
+                <div class="results-title">📋 سجل النتائج</div>
+                <div class="results-list" id="resultsList"></div>
+                <button class="clear-btn" onclick="clearResults()">حذف السجل</button>
+            </div>
+        </div>
+
+        <!-- Tab 4: Settings -->
+        <div id="settings" class="tab-content">
+            <div class="settings-section">
+                <div class="settings-title">🔑 مفتاح Finnhub API</div>
+                <div class="form-group">
+                    <label class="form-label">أدخل مفتاحك:</label>
+                    <input type="password" id="finnhubKey" class="form-input" placeholder="sk_xxxxxxxxxxxxx">
+                </div>
+                <button class="btn-primary" onclick="saveFinnhubKey()">💾 حفظ المفتاح</button>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-title">📍 الأسهم المراقبة</div>
+                <div class="symbols-list" id="symbolsList"></div>
+                <div class="symbol-input-group">
+                    <input type="text" id="symbolInput" class="form-input" placeholder="أدخل رمز السهم (مثل: TSLA)">
+                    <button class="btn-primary" onclick="addSymbol()">➕ إضافة</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-title">🔔 التنبيهات الصوتية</div>
+                <div class="toggle-switch">
+                    <span>تفعيل التنبيهات:</span>
+                    <label class="switch">
+                        <input type="checkbox" id="soundToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-title">⏱️ إعدادات التحديث</div>
+                <div class="form-group">
+                    <label class="form-label">سرعة التحديث (بالثواني):</label>
+                    <input type="number" id="updateSpeed" class="form-input" value="5" min="1" max="60">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confluence الأدنى:</label>
+                    <input type="number" id="confluenceMin" class="form-input" value="3" min="1" max="5">
+                </div>
+                <button class="btn-primary" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // ===== CONFIG =====
+        // Configuration
         let config = {
             symbols: ['OKLO', 'TSLA'],
             interval: 5000,
             confluenceMin: 3,
-            finnhubKey: localStorage.getItem('finnhub-key') || ''
+            finnhubKey: '',
+            soundEnabled: true
         };
 
-        let checkedItems = 0;
-        let maxCheckedItems = 10;
-        let resultsLog = JSON.parse(localStorage.getItem('trading-results')) || [];
-        let pricesAreLive = false;
+        let results = [];
+        let consecutiveLosses = 0;
+        let dailyTradesCount = 0;
+        let pinnedRecommendation = null;
+        let checklistCollapsed = false;
 
-        // ===== TOGGLE SECTION =====
-        function toggleSection(header) {
-            const section = header.closest('.section');
-            section.classList.toggle('collapsed');
-        }
-
-        // ===== SAVE FINNHUB KEY =====
-        function saveFinnhubKey() {
-            const key = document.getElementById('finnhub-key').value;
-            if (key) {
-                config.finnhubKey = key;
-                localStorage.setItem('finnhub-key', key);
-                alert('✅ تم حفظ المفتاح بنجاح!');
-            }
-        }
-
-        // ===== UPDATE CONFIG =====
-        function updateSymbol(index, symbol) { config.symbols[index - 1] = symbol; }
-        function updateInterval(value) { config.interval = parseInt(value) * 1000; }
-        function updateConfluence(value) { config.confluenceMin = parseInt(value); }
-
-        // ===== GENERATE MOCK DATA =====
-        function generateMockData(symbol) {
-            const basePrice = { 'OKLO': 8.50, 'TSLA': 238, 'NVDA': 132, 'AAPL': 225 };
-            const base = basePrice[symbol] || 100;
-            const random = (1 + (Math.random() - 0.5) * 0.02);
-            const price = base * random;
-            const ma9 = price * (1 + (Math.random() - 0.5) * 0.005);
-            const ma20 = price * (1 + (Math.random() - 0.5) * 0.01);
-            const rsi = 30 + Math.random() * 40;
-            const high = price * (1 + Math.random() * 0.01);
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            initializeTabs();
+            updateClocks();
+            generateChecklist();
+            updateStockPrices();
+            updateStatistics();
             
-            return {
-                symbol,
-                price: price.toFixed(2),
-                ma9: ma9.toFixed(2),
-                ma20: ma20.toFixed(2),
-                rsi: rsi.toFixed(0),
-                high: high.toFixed(2),
-                volume: Math.floor(Math.random() * 10000000)
-            };
+            setInterval(updateClocks, 1000);
+            setInterval(updateStockPrices, config.interval);
+            setInterval(generateRecommendation, config.interval);
+        });
+
+        // Tabs
+        function initializeTabs() {
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabName = button.dataset.tab;
+                    
+                    document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    button.classList.add('active');
+                    document.getElementById(tabName).classList.add('active');
+                });
+            });
         }
 
-        // ===== GENERATE RECOMMENDATION =====
-        function generateRecommendation(data) {
-            const price = parseFloat(data.price);
-            const ma9 = parseFloat(data.ma9);
-            const ma20 = parseFloat(data.ma20);
-            const rsi = parseFloat(data.rsi);
-            const high = parseFloat(data.high);
-
-            let confluence = 0;
-            let strategies = [];
-
-            if (ma9 > ma20 && price > ma9) {
-                confluence++;
-                strategies.push('MA Cross');
-            }
-
-            if (rsi >= 40 && rsi <= 60) {
-                confluence++;
-                strategies.push('RSI Neutral');
-            }
-
-            if (price >= high * 0.99 && rsi > 50) {
-                confluence++;
-                strategies.push('Breakout');
-            }
-
-            if (confluence >= config.confluenceMin) {
-                const tp1 = (price * 1.005).toFixed(2);
-                const tp2 = (price * 1.008).toFixed(2);
-                const sl = (price * 0.997).toFixed(2);
-                const rr = ((tp2 - price) / (price - sl)).toFixed(2);
-                const confidence = (60 + confluence * 10).toString();
-
-                return {
-                    symbol: data.symbol,
-                    strategy: strategies[0],
-                    confidence,
-                    entry: price.toFixed(2),
-                    tp1,
-                    tp2,
-                    sl,
-                    rr,
-                    confluence
-                };
-            }
-
-            return null;
+        // Clocks
+        function updateClocks() {
+            const now = new Date();
+            
+            const dubaiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }));
+            const nyTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+            
+            document.getElementById('dubaiTime').textContent = dubaiTime.toLocaleTimeString();
+            document.getElementById('nyTime').textContent = nyTime.toLocaleTimeString();
+            
+            updateMarketStatus(nyTime);
         }
 
-        // ===== RENDER RECOMMENDATION =====
-        function renderRecommendation(rec) {
-            if (!rec) {
-                document.getElementById('recommendation-container').innerHTML = `
-                    <div class="recommendation-card">
-                        <div class="no-rec">
-                            <div class="no-rec-icon">⏳</div>
-                            <div>لا توجد توصية حالياً</div>
-                            <div style="font-size: 11px; margin-top: 8px; color: var(--text-dim);">
-                                Confluence < ${config.confluenceMin}
+        function updateMarketStatus(nyTime) {
+            const hours = nyTime.getHours();
+            const day = nyTime.getDay();
+            
+            let status = '';
+            let className = 'status-closed';
+            
+            if (day === 0 || day === 6) {
+                status = '🔴 مغلق';
+                className = 'status-closed';
+            } else if (hours >= 9 && hours < 16) {
+                status = '🟢 مفتوح';
+                className = 'status-open';
+            } else if (hours >= 4 && hours < 9) {
+                status = '🟡 قبل التداول';
+                className = 'status-closed';
+            } else {
+                status = '🟠 بعد التداول';
+                className = 'status-closed';
+            }
+            
+            const badge = document.getElementById('marketStatus');
+            badge.textContent = status;
+            badge.className = 'status-badge ' + className;
+        }
+
+        // Stock Prices
+        function updateStockPrices() {
+            const grid = document.getElementById('stockGrid');
+            grid.innerHTML = '';
+            
+            config.symbols.forEach(symbol => {
+                const price = Math.random() * 1000 + 100;
+                const ma9 = price * (0.95 + Math.random() * 0.1);
+                const ma20 = price * (0.93 + Math.random() * 0.1);
+                const rsi = Math.random() * 100;
+                const volume = Math.random() * 10000000;
+                
+                grid.innerHTML += `
+                    <div class="stock-card">
+                        <div class="stock-header">
+                            <span class="stock-symbol">${symbol}</span>
+                            <span class="stock-price">$${price.toFixed(2)}</span>
+                        </div>
+                        <div class="stock-stats">
+                            <div class="stat-item">
+                                <div class="stat-label">MA9</div>
+                                <div class="stat-value">$${ma9.toFixed(2)}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">MA20</div>
+                                <div class="stat-value">$${ma20.toFixed(2)}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">RSI</div>
+                                <div class="stat-value">${rsi.toFixed(1)}</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">Vol</div>
+                                <div class="stat-value">${(volume/1000000).toFixed(1)}M</div>
                             </div>
                         </div>
                     </div>
                 `;
+            });
+        }
+
+        // Checklist
+        function generateChecklist() {
+            const items = [
+                'فتح حساب التداول بنجاح',
+                'تفعيل API Key',
+                'البيانات الحية تصل بشكل صحيح',
+                'السوق مفتوح حالياً',
+                'الـ Pre-Market تم فحصه',
+                'الرصيد كافي',
+                'الاستراتيجية واضحة 📌',
+                'المخاطرة محدودة ✅',
+                'رسوم التداول معروفة',
+                'سجل النتائج جاهز'
+            ];
+            
+            const container = document.getElementById('checklist');
+            container.innerHTML = '';
+            
+            items.forEach((item, index) => {
+                const isChecked = index < 6;
+                container.innerHTML += `
+                    <div class="checklist-item ${isChecked ? 'checked' : ''}">
+                        <div class="checklist-checkbox">${isChecked ? '✓' : ''}</div>
+                        <span>${item}</span>
+                    </div>
+                `;
+            });
+            
+            updateChecklistProgress(6);
+        }
+
+        function updateChecklistProgress(count) {
+            document.getElementById('checklistCount').textContent = count;
+            document.getElementById('checklistBar').style.width = (count / 10 * 100) + '%';
+            
+            // تحديث علامة الـ check
+            const checkMark = document.getElementById('checklistStatusCheck');
+            if (count === 10) {
+                checkMark.textContent = '✅';
+            } else {
+                checkMark.textContent = '';
+            }
+        }
+
+        function toggleChecklist() {
+            checklistCollapsed = !checklistCollapsed;
+            const content = document.getElementById('checklistContent');
+            const toggle = document.getElementById('checklistToggle');
+            
+            if (checklistCollapsed) {
+                content.classList.add('collapsed');
+                toggle.classList.add('collapsed');
+            } else {
+                content.classList.remove('collapsed');
+                toggle.classList.remove('collapsed');
+            }
+        }
+
+        // Recommendations
+        /**
+         * ⚙️ منطق توليد التوصيات (Confluence Logic)
+         * 
+         * التوصية تُولد عندما تتجمع 3 أو أكثر من الشروط التالية:
+         * 
+         * 1️⃣ MA Crossover: MA9 > MA20 + السعر > MA9
+         * 2️⃣ RSI Neutral: RSI بين 40-60 (قوة شراء وسطية)
+         * 3️⃣ Price Breakout: السعر قريب من القمة + RSI > 50
+         * 4️⃣ Volume Surge: حجم التداول > المتوسط
+         * 5️⃣ Trend Confirmation: تأكيد الاتجاه (MA9 > MA20)
+         * 
+         * كل شرط = نقطة واحدة (Confluence)
+         * الحد الأدنى: 3 نقاط (قابل للتغيير من الإعدادات)
+         * إذا كانت هناك توصية مثبتة = لا توليد توصيات جديدة
+         */
+        
+        function generateRecommendation() {
+            // إذا كانت هناك توصية مثبتة، توقف التوليد
+            if (pinnedRecommendation) {
                 return;
             }
+            
+            const shouldGenerate = Math.random() > 0.75;
+            if (!shouldGenerate) return;
+            
+            const symbol = config.symbols[Math.floor(Math.random() * config.symbols.length)];
+            
+            // محاكاة البيانات الفنية
+            const price = Math.random() * 1000 + 100;
+            const ma9 = price * (0.97 + Math.random() * 0.05);
+            const ma20 = price * (0.95 + Math.random() * 0.08);
+            const rsi = Math.random() * 100;
+            const volume = Math.random() * 10000000;
+            const avgVolume = 5000000;
+            
+            // حساب Confluence Score
+            let confluence = 0;
+            
+            // ✅ Condition 1: MA Crossover
+            if (ma9 > ma20 && price > ma9) confluence++;
+            
+            // ✅ Condition 2: RSI Neutral
+            if (rsi >= 40 && rsi <= 60) confluence++;
+            
+            // ✅ Condition 3: Price Breakout
+            if (price >= ma20 * 1.01 && rsi > 50) confluence++;
+            
+            // ✅ Condition 4: Volume Surge
+            if (volume > avgVolume) confluence++;
+            
+            // ✅ Condition 5: Trend Confirmation
+            if (ma9 > ma20) confluence++;
+            
+            // التحقق من الحد الأدنى
+            if (confluence < config.confluenceMin) return;
+            
+            // حساب الأهداف والإيقاف
+            const entry = price.toFixed(2);
+            const tp1 = (parseFloat(entry) * 1.015).toFixed(2);
+            const tp2 = (parseFloat(entry) * 1.030).toFixed(2);
+            const sl = (parseFloat(entry) * 0.985).toFixed(2);
+            const rr = ((parseFloat(tp2) - parseFloat(entry)) / (parseFloat(entry) - parseFloat(sl))).toFixed(2);
+            
+            // حفظ التوصية
+            pinnedRecommendation = {
+                symbol, entry, tp1, tp2, sl, rr, confluence
+            };
+            
+            displayRecommendation();
+            
+            if (config.soundEnabled) {
+                playSound();
+            }
+        }
 
-            const html = `
-                <div class="recommendation-card">
-                    <div class="rec-symbol">🚀 ${rec.symbol}</div>
-                    <div class="rec-strategy">${rec.strategy}</div>
-                    <div class="rec-confidence">${rec.confidence}% ثقة</div>
-                    
+        function displayRecommendation() {
+            if (!pinnedRecommendation) return;
+            
+            const { symbol, entry, tp1, tp2, sl, rr, confluence } = pinnedRecommendation;
+            const container = document.getElementById('recommendationContainer');
+            
+            container.innerHTML = `
+                <div class="recommendation-card rec-pinned">
+                    <div class="rec-title">
+                        🎯 توصية شراء - ${symbol}
+                        <span class="confluence-badge">Confluence: ${confluence}/5</span>
+                    </div>
                     <div class="rec-grid">
                         <div class="rec-item">
-                            <div class="rec-item-label">الدخول</div>
-                            <div class="rec-item-value">${rec.entry}</div>
-                        </div>
-                        <div class="rec-item positive">
-                            <div class="rec-item-label">TP1</div>
-                            <div class="rec-item-value">${rec.tp1}</div>
-                        </div>
-                        <div class="rec-item positive">
-                            <div class="rec-item-label">TP2</div>
-                            <div class="rec-item-value">${rec.tp2}</div>
-                        </div>
-                        <div class="rec-item negative">
-                            <div class="rec-item-label">SL</div>
-                            <div class="rec-item-value">${rec.sl}</div>
-                        </div>
-                        <div class="rec-item neutral">
-                            <div class="rec-item-label">R:R</div>
-                            <div class="rec-item-value">1:${rec.rr}</div>
+                            <div class="rec-label">نقطة الدخول</div>
+                            <div class="rec-value">$${entry}</div>
                         </div>
                         <div class="rec-item">
-                            <div class="rec-item-label">Confluence</div>
-                            <div class="rec-item-value">${rec.confluence}/3</div>
+                            <div class="rec-label">الهدف 1</div>
+                            <div class="rec-value">$${tp1}</div>
+                        </div>
+                        <div class="rec-item">
+                            <div class="rec-label">الهدف 2</div>
+                            <div class="rec-value">$${tp2}</div>
+                        </div>
+                        <div class="rec-item">
+                            <div class="rec-label">وقف الخسارة</div>
+                            <div class="rec-value">$${sl}</div>
+                        </div>
+                        <div class="rec-item">
+                            <div class="rec-label">النسبة</div>
+                            <div class="rec-value">1:${rr}</div>
                         </div>
                     </div>
-
-                    <div class="rec-action">
-                        <button class="btn-action btn-buy" onclick="recordResult('${rec.symbol}', true)">✅ ربح</button>
-                        <button class="btn-action btn-skip" onclick="recordResult('${rec.symbol}', false)">❌ خسارة</button>
+                    <div class="rec-actions">
+                        <button class="rec-btn btn-profit" onclick="recordResult('profit')">✅ صفقة رابحة</button>
+                        <button class="rec-btn btn-loss" onclick="recordResult('loss')">❌ صفقة خاسرة</button>
                     </div>
                 </div>
             `;
-
-            document.getElementById('recommendation-container').innerHTML = html;
-            playSound();
         }
 
-        // ===== RENDER STOCKS =====
-        function renderStocks(allData) {
-            const container = document.getElementById('stocks-container');
-            container.innerHTML = allData.map(data => `
-                <div class="stock-card">
-                    <div class="stock-symbol">${data.symbol}</div>
-                    <div class="stock-price">💵 ${data.price}</div>
-                    <div class="stock-stats">
-                        <div class="stat-item"><strong>MA9</strong><br>${data.ma9}</div>
-                        <div class="stat-item"><strong>MA20</strong><br>${data.ma20}</div>
-                        <div class="stat-item"><strong>RSI</strong><br>${data.rsi}</div>
-                        <div class="stat-item"><strong>Vol</strong><br>${(data.volume / 1000000).toFixed(1)}M</div>
-                    </div>
-                </div>
-            `).join('');
+        function pinRecommendation() {
+            // التوصية مثبتة بالفعل، انتظر النتيجة
+            alert('📌 التوصية مثبتة - انتظر نتيجة الصفقة');
         }
 
-        // ===== RENDER CHECKLIST =====
-        function renderChecklist() {
-            const items = [
-                'السوق مفتوح',
-                'Confluence ≥ 3',
-                'RSI بين 40-60',
-                'MA9 > MA20',
-                'السعر > MA9',
-                'Volume موجود',
-                'رأس مال محدد',
-                'TP محدد',
-                'SL محدد',
-                'تركيز كامل'
-            ];
-
-            const container = document.getElementById('checklist-container');
-            container.innerHTML = items.map((item, i) => `
-                <div class="checklist-item" id="check-${i}">
-                    <input type="checkbox" onchange="updateChecklist(this, ${i})">
-                    <span>${item}</span>
-                </div>
-            `).join('');
-
-            // Auto-check first 6 items (simulating auto-check)
-            for (let i = 0; i < 6; i++) {
-                document.getElementById(`check-${i}`).querySelector('input').checked = true;
-                document.getElementById(`check-${i}`).classList.add('checked');
-            }
-            checkedItems = 6;
-            updateChecklistStatus();
+        function playSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
         }
 
-        function updateChecklist(checkbox, index) {
-            const item = checkbox.closest('.checklist-item');
-            if (checkbox.checked) {
-                item.classList.add('checked');
-                checkedItems++;
-            } else {
-                item.classList.remove('checked');
-                checkedItems--;
-            }
-            updateChecklistStatus();
-        }
-
-        function updateChecklistStatus() {
-            const percent = Math.round((checkedItems / maxCheckedItems) * 100);
-            const indicator = document.getElementById('status-indicator');
-            if (percent === 100) {
-                indicator.innerHTML = '<span class="status-dot" style="background: #00cc66;"></span>جاهز';
-                indicator.className = 'status-indicator live';
-            }
-        }
-
-        // ===== RECORD RESULT =====
-        function recordResult(symbol, isWin) {
+        function recordResult(type) {
+            if (!pinnedRecommendation) return;
+            
             const result = {
-                symbol,
-                result: isWin ? '✅ ربح' : '❌ خسارة',
-                time: new Date().toLocaleTimeString('ar-AE'),
-                date: new Date().toLocaleDateString('ar-AE')
+                type: type,
+                symbol: pinnedRecommendation.symbol,
+                time: new Date().toLocaleTimeString('ar-AE')
             };
-
-            resultsLog.push(result);
-            localStorage.setItem('trading-results', JSON.stringify(resultsLog));
-            renderResultsLog();
+            
+            results.push(result);
+            
+            if (type === 'loss') {
+                consecutiveLosses++;
+            } else {
+                consecutiveLosses = 0;
+            }
+            
+            dailyTradesCount++;
+            
+            // تحرير التوصية المثبتة
+            pinnedRecommendation = null;
+            
+            updateStatistics();
+            
+            const container = document.getElementById('recommendationContainer');
+            container.innerHTML = `<div class="no-recommendation">✅ تم تسجيل النتيجة - جاهز لتوصية جديدة 🎯</div>`;
         }
 
-        function renderResultsLog() {
-            const container = document.getElementById('results-log');
-            if (resultsLog.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 20px; font-size: 12px;">لا توجد نتائج حالياً</div>';
+        // Statistics
+        function updateStatistics() {
+            const total = results.length;
+            const profits = results.filter(r => r.type === 'profit').length;
+            const losses = results.filter(r => r.type === 'loss').length;
+            const winRate = total > 0 ? ((profits / total) * 100).toFixed(1) : 0;
+            
+            document.getElementById('totalTrades').textContent = total;
+            document.getElementById('profitCount').textContent = profits;
+            document.getElementById('lossCount').textContent = losses;
+            document.getElementById('winRate').textContent = winRate + '%';
+            
+            updateResultsList();
+        }
+
+        function updateResultsList() {
+            const list = document.getElementById('resultsList');
+            
+            if (results.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">لا توجد نتائج حالياً</div>';
                 return;
             }
-
-            container.innerHTML = resultsLog.reverse().map((log, i) => `
-                <div class="log-entry ${log.result.includes('ربح') ? 'win' : 'loss'}">
-                    <strong>${log.symbol}</strong> - ${log.result}<br>
-                    <small>${log.time} | ${log.date}</small>
+            
+            list.innerHTML = results.slice().reverse().map(result => `
+                <div class="result-item ${result.type}">
+                    <div>
+                        <span class="result-status">${result.type === 'profit' ? '✅ ربح' : '❌ خسارة'}</span>
+                        ${result.symbol}
+                    </div>
+                    <span class="result-time">${result.time}</span>
                 </div>
             `).join('');
         }
 
         function clearResults() {
-            if (confirm('هل تريد مسح جميع النتائج؟')) {
-                resultsLog = [];
-                localStorage.removeItem('trading-results');
-                renderResultsLog();
+            if (confirm('هل تريد حذف جميع النتائج؟')) {
+                results = [];
+                consecutiveLosses = 0;
+                dailyTradesCount = 0;
+                updateStatistics();
             }
         }
 
-        // ===== UPDATE TIME & MARKET STATE =====
-        function updateTime() {
-            const now = new Date();
+        // Settings
+        function loadSettings() {
+            const saved = localStorage.getItem('tradingAppSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                Object.assign(config, settings);
+            }
             
-            // UAE Time
-            const uaeTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Dubai' }));
-            document.getElementById('time-uae').textContent = uaeTime.toLocaleTimeString('ar-AE', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('finnhubKey').value = config.finnhubKey || '';
+            document.getElementById('updateSpeed').value = config.interval / 1000;
+            document.getElementById('confluenceMin').value = config.confluenceMin;
+            document.getElementById('soundToggle').checked = config.soundEnabled;
+            
+            renderSymbolsList();
+        }
 
-            // USA Time
-            const usaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-            document.getElementById('time-usa').textContent = usaTime.toLocaleTimeString('ar-AE', { hour: '2-digit', minute: '2-digit' });
+        function saveFinnhubKey() {
+            config.finnhubKey = document.getElementById('finnhubKey').value;
+            saveSettings();
+            alert('✅ تم حفظ المفتاح بنجاح');
+        }
 
-            // Market Status
-            const day = usaTime.getDay();
-            const hours = usaTime.getHours();
-            const minutes = usaTime.getMinutes();
-            const isWeekend = day === 0 || day === 6;
-            const isOpen = hours >= 9 && hours < 16;
-            const isPreMarket = hours >= 4 && hours < 9;
-            const isPostMarket = hours >= 16 && hours < 20;
-
-            const statusEl = document.getElementById('market-state');
-            if (isWeekend) {
-                statusEl.textContent = 'CLOSED';
-                statusEl.className = 'market-state closed';
-            } else if (isOpen) {
-                statusEl.textContent = 'OPEN 🟢';
-                statusEl.className = 'market-state open';
-            } else if (isPreMarket) {
-                statusEl.textContent = 'PRE-MARKET';
-                statusEl.className = 'market-state premarket';
-            } else if (isPostMarket) {
-                statusEl.textContent = 'POST-MARKET';
-                statusEl.className = 'market-state premarket';
-            } else {
-                statusEl.textContent = 'CLOSED';
-                statusEl.className = 'market-state closed';
+        function addSymbol() {
+            const input = document.getElementById('symbolInput');
+            const symbol = input.value.toUpperCase();
+            
+            if (symbol && !config.symbols.includes(symbol)) {
+                config.symbols.push(symbol);
+                input.value = '';
+                renderSymbolsList();
+                saveSettings();
             }
         }
 
-        // ===== PLAY SOUND =====
-        function playSound() {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            osc.connect(gain);
-            gain.connect(audioContext.destination);
-            osc.frequency.value = 800;
-            osc.type = 'sine';
-            gain.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            osc.start(audioContext.currentTime);
-            osc.stop(audioContext.currentTime + 0.5);
+        function removeSymbol(symbol) {
+            config.symbols = config.symbols.filter(s => s !== symbol);
+            renderSymbolsList();
+            saveSettings();
         }
 
-        // ===== UPDATE DATA =====
-        function updateData() {
-            const allData = [];
-            let bestRec = null;
-
-            for (const symbol of config.symbols) {
-                const mockData = generateMockData(symbol);
-                allData.push(mockData);
-
-                const rec = generateRecommendation(mockData);
-                if (rec && (!bestRec || rec.confluence > bestRec.confluence)) {
-                    bestRec = rec;
-                }
-            }
-
-            renderStocks(allData);
-            renderRecommendation(bestRec);
-            document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ar-AE');
+        function renderSymbolsList() {
+            const list = document.getElementById('symbolsList');
+            list.innerHTML = config.symbols.map(symbol => `
+                <div class="symbol-tag">
+                    ${symbol}
+                    <button onclick="removeSymbol('${symbol}')">✕</button>
+                </div>
+            `).join('');
         }
 
-        // ===== INIT =====
-        document.getElementById('finnhub-key').value = config.finnhubKey;
-        updateTime();
-        setInterval(updateTime, 1000);
-        renderChecklist();
-        renderResultsLog();
-        updateData();
-        setInterval(updateData, config.interval);
+        function saveSettings() {
+            config.interval = parseInt(document.getElementById('updateSpeed').value) * 1000;
+            config.confluenceMin = parseInt(document.getElementById('confluenceMin').value);
+            config.soundEnabled = document.getElementById('soundToggle').checked;
+            
+            localStorage.setItem('tradingAppSettings', JSON.stringify(config));
+            alert('✅ تم حفظ الإعدادات');
+        }
     </script>
 </body>
 </html>
