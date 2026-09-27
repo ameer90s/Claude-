@@ -31,62 +31,83 @@
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
+            padding: 14px 16px;
             text-align: center;
         }
 
         .header h1 {
-            font-size: 28px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            margin-bottom: 4px;
         }
 
         .header-info {
             display: flex;
             justify-content: center;
-            align-items: center;
-            gap: 20px;
+            align-items: stretch;
+            gap: 10px;
             flex-wrap: nowrap;
-            margin-top: 15px;
+            margin-top: 10px;
             font-size: 14px;
         }
 
         .clock-item {
-            background: rgba(255,255,255,0.2);
-            padding: 12px 20px;
-            border-radius: 8px;
+            background: rgba(255,255,255,0.18);
+            padding: 8px 12px;
+            border-radius: 10px;
             backdrop-filter: blur(10px);
             text-align: center;
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
+
         .clock-flag {
-            font-size: 32px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            margin-bottom: 2px;
         }
 
         .clock-label {
-            font-size: 11px;
+            font-size: 9px;
             opacity: 0.9;
             text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
         .clock-time {
-            font-size: 18px;
+            font-size: 13px;
             font-weight: bold;
+            font-variant-numeric: tabular-nums;
         }
 
         .market-status-center {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 5px;
+            flex: 1;
+            min-width: 0;
+            background: rgba(255,255,255,0.18);
+            border-radius: 10px;
+            padding: 8px 10px;
+        }
+
+        .market-status-label {
+            font-size: 9px;
+            opacity: 0.9;
         }
 
         .status-badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 3px 10px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
+            white-space: nowrap;
         }
 
         .status-open {
@@ -152,41 +173,81 @@
             }
         }
 
-        /* Stock Prices Grid */
+        /* Stock Prices - Swipeable Carousel */
+        .stock-grid-wrap {
+            margin-bottom: 20px;
+        }
+
         .stock-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            gap: 12px;
+            padding: 4px 4px 10px 4px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .stock-grid::-webkit-scrollbar {
+            display: none;
         }
 
         .stock-card {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             border-radius: 12px;
-            padding: 20px;
+            padding: 14px;
             border-left: 4px solid #667eea;
             transition: transform 0.2s ease;
+            flex: 0 0 82%;
+            max-width: 260px;
+            scroll-snap-align: start;
+        }
+
+        @media (min-width: 480px) {
+            .stock-card {
+                flex-basis: 240px;
+            }
         }
 
         .stock-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
+        }
+
+        .stock-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .stock-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #d0d0d0;
+        }
+
+        .stock-dot.active {
+            background: #667eea;
+            width: 16px;
+            border-radius: 3px;
         }
 
         .stock-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
 
         .stock-symbol {
-            font-size: 22px;
+            font-size: 16px;
             font-weight: bold;
             color: #333;
         }
 
         .stock-price {
-            font-size: 24px;
+            font-size: 17px;
             font-weight: bold;
             color: #667eea;
         }
@@ -194,25 +255,27 @@
         .stock-stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            font-size: 13px;
+            gap: 6px;
+            font-size: 11px;
         }
 
         .stat-item {
             background: rgba(255,255,255,0.8);
-            padding: 10px;
+            padding: 6px 8px;
             border-radius: 6px;
         }
 
         .stat-label {
             color: #666;
             font-weight: 600;
+            font-size: 10px;
         }
 
         .stat-value {
             color: #667eea;
             font-weight: bold;
-            margin-top: 3px;
+            margin-top: 2px;
+            font-size: 12px;
         }
 
         /* Checklist */
@@ -718,35 +781,9 @@
         }
 
         @media (max-width: 768px) {
-            .header-info {
-                flex-direction: row;
-                gap: 10px;
-            }
-
-            .clock-item {
-                padding: 8px 12px;
-            }
-
-            .clock-flag {
-                font-size: 24px;
-                margin-bottom: 2px;
-            }
-
-            .clock-label {
-                font-size: 9px;
-            }
-
-            .clock-time {
-                font-size: 14px;
-            }
-
             .tab-button {
                 font-size: 14px;
                 padding: 12px 10px;
-            }
-
-            .stock-grid {
-                grid-template-columns: 1fr;
             }
 
             .stats-grid {
@@ -772,8 +809,8 @@
                 </div>
 
                 <div class="market-status-center">
+                    <div class="market-status-label">السوق</div>
                     <div class="status-badge" id="marketStatus">Loading...</div>
-                    <div style="font-size: 12px; opacity: 0.9;">السوق</div>
                 </div>
 
                 <div class="clock-item">
@@ -795,7 +832,10 @@
         <!-- Tab 1: Stock Prices & Checklist -->
         <div id="stocks" class="tab-content active">
             <h2>أسعار الأسهم</h2>
-            <div class="stock-grid" id="stockGrid"></div>
+            <div class="stock-grid-wrap">
+                <div class="stock-grid" id="stockGrid"></div>
+                <div class="stock-dots" id="stockDots"></div>
+            </div>
 
             <div class="checklist-section">
                 <div class="checklist-title" onclick="toggleChecklist()">
@@ -930,13 +970,95 @@
                 this.symbol = symbol;
                 this.basePrice = basePricesDefault[symbol] || (100 + Math.random() * 400);
                 this.price = this.basePrice;
-                this.history = [];
+                this.history = []; // أسعار الإغلاق (فريم التشغيل الحالي، دقيقة تقريباً)
                 this.usingRealData = false;
 
-                for (let i = 0; i < 50; i++) {
-                    this.history.push(this.basePrice * (0.995 + Math.random() * 0.01));
+                // بذرة أولية لتاريخ الأسعار حتى تكون المؤشرات منطقية من أول تشغيل
+                let seed = this.basePrice;
+                for (let i = 0; i < 60; i++) {
+                    seed = seed * (0.998 + Math.random() * 0.004);
+                    this.history.push(seed);
                 }
+                this.price = seed;
                 this.history.push(this.price);
+
+                // ===== Wilder RSI (متوسط متحرك أسّي، مو إعادة حساب من الصفر كل مرة) =====
+                this.rsiPeriod = 14;
+                this.avgGain = null;
+                this.avgLoss = null;
+                this._seedRSI();
+
+                // ===== ATR (True Range بمتوسط Wilder) =====
+                this.atrPeriod = 14;
+                this.atr = null;
+                this.prevPriceForTR = this.price;
+                this._seedATR();
+
+                // ===== فريم أعلى (Higher Timeframe): نجمّع كل N تحديث كـ "شمعة" واحدة =====
+                this.htfBarSize = 12; // كل 12 تحديث تتشكّل "شمعة" فريم أعلى
+                this.htfTickCount = 0;
+                this.htfBarOpen = this.price;
+                this.htfBarHigh = this.price;
+                this.htfBarLow = this.price;
+                this.htfCloses = []; // إغلاقات الفريم الأعلى
+                this.htfMA = null; // MA20 على الفريم الأعلى = تأكيد الاتجاه العام
+            }
+
+            _seedRSI() {
+                let gains = 0, losses = 0, count = 0;
+                for (let i = 1; i < this.history.length; i++) {
+                    const change = this.history[i] - this.history[i - 1];
+                    if (change > 0) gains += change; else losses += Math.abs(change);
+                    count++;
+                }
+                this.avgGain = count > 0 ? gains / count : 0;
+                this.avgLoss = count > 0 ? losses / count : 0.0001;
+            }
+
+            _seedATR() {
+                let trSum = 0;
+                for (let i = 1; i < this.history.length; i++) {
+                    trSum += Math.abs(this.history[i] - this.history[i - 1]);
+                }
+                this.atr = trSum / Math.max(1, this.history.length - 1);
+            }
+
+            _pushPrice(newPrice) {
+                const prevPrice = this.price;
+                this.price = newPrice;
+                this.history.push(newPrice);
+                if (this.history.length > 300) this.history.shift();
+
+                // --- تحديث Wilder RSI تدريجياً (تمهيد أسّي، أدق من إعادة الحساب الكامل) ---
+                const change = newPrice - prevPrice;
+                const gain = change > 0 ? change : 0;
+                const loss = change < 0 ? Math.abs(change) : 0;
+                this.avgGain = ((this.avgGain * (this.rsiPeriod - 1)) + gain) / this.rsiPeriod;
+                this.avgLoss = ((this.avgLoss * (this.rsiPeriod - 1)) + loss) / this.rsiPeriod;
+
+                // --- تحديث ATR تدريجياً (True Range = |سعر جديد - سعر سابق| بدون بيانات OHLC حقيقية) ---
+                const tr = Math.abs(newPrice - prevPrice);
+                this.atr = ((this.atr * (this.atrPeriod - 1)) + tr) / this.atrPeriod;
+
+                // --- تحديث شمعة الفريم الأعلى ---
+                this.htfBarHigh = Math.max(this.htfBarHigh, newPrice);
+                this.htfBarLow = Math.min(this.htfBarLow, newPrice);
+                this.htfTickCount++;
+                if (this.htfTickCount >= this.htfBarSize) {
+                    this.htfCloses.push(newPrice);
+                    if (this.htfCloses.length > 60) this.htfCloses.shift();
+                    if (this.htfCloses.length >= 20) {
+                        const sum = this.htfCloses.slice(-20).reduce((a, b) => a + b, 0);
+                        this.htfMA = sum / 20;
+                    } else if (this.htfCloses.length > 0) {
+                        const sum = this.htfCloses.reduce((a, b) => a + b, 0);
+                        this.htfMA = sum / this.htfCloses.length;
+                    }
+                    this.htfTickCount = 0;
+                    this.htfBarOpen = newPrice;
+                    this.htfBarHigh = newPrice;
+                    this.htfBarLow = newPrice;
+                }
             }
 
             // تحديث عشوائي (محاكاة) - يُستخدم فقط عند عدم توفر بيانات حقيقية
@@ -944,18 +1066,14 @@
                 const volatility = 0.006;
                 const momentum = (Math.random() - 0.48) * 0.002;
                 const randomWalk = (Math.random() - 0.5) * volatility * this.price;
-
-                this.price = this.price * (1 + momentum + randomWalk / this.price);
-                this.history.push(this.price);
-                if (this.history.length > 100) this.history.shift();
+                const newPrice = this.price * (1 + momentum + randomWalk / this.price);
+                this._pushPrice(newPrice);
             }
 
             // تطبيق سعر حقيقي من Finnhub
             applyRealPrice(price) {
                 if (price && price > 0) {
-                    this.price = price;
-                    this.history.push(price);
-                    if (this.history.length > 100) this.history.shift();
+                    this._pushPrice(price);
                     this.usingRealData = true;
                 }
             }
@@ -968,22 +1086,21 @@
                 return sum / period;
             }
 
-            getRSI(period = 14) {
-                if (this.history.length < period + 1) return 50;
-
-                let gains = 0, losses = 0;
-                const start = this.history.length - period;
-                for (let i = start; i < this.history.length; i++) {
-                    const change = this.history[i] - this.history[i - 1];
-                    if (change > 0) gains += change;
-                    else losses += Math.abs(change);
-                }
-
-                const avgGain = gains / period;
-                const avgLoss = losses / period;
-                if (avgLoss === 0) return 100;
-                const rs = avgGain / avgLoss;
+            // RSI بطريقة Wilder الصحيحة (متوسط متحرك أسّي تراكمي، مو نافذة ثابتة تُعاد حسابها)
+            getRSI() {
+                if (this.avgLoss === 0) return 100;
+                const rs = this.avgGain / this.avgLoss;
                 return 100 - (100 / (1 + rs));
+            }
+
+            getATR() {
+                return this.atr || (this.price * 0.005);
+            }
+
+            // تأكيد الاتجاه العام على فريم أعلى: هل السعر الحالي فوق متوسط الفريم الأعلى؟
+            isHigherTimeframeBullish() {
+                if (this.htfMA === null) return null; // بيانات غير كافية بعد
+                return this.price > this.htfMA;
             }
         }
 
@@ -1106,18 +1223,16 @@
         }
 
         // Stock Prices - يجلب سعر حقيقي من Finnhub إن توفر مفتاح، وإلا يستخدم محاكاة واقعية
-        let latestQuotes = {}; // { symbol: {price, ma9, ma20, rsi, volume, isReal} }
+        let latestQuotes = {}; // { symbol: {price, ma9, ma20, rsi, atr, volume, isReal, htfBullish} }
 
         async function updateStockPrices() {
             for (const symbol of config.symbols) {
                 const sim = ensureSimulator(symbol);
-                let isReal = false;
 
                 if (config.finnhubKey) {
                     const quote = await fetchFinnhubQuote(symbol);
                     if (quote) {
                         sim.applyRealPrice(quote.price);
-                        isReal = true;
                     } else if (!sim.usingRealData) {
                         // لا يوجد رد جديد بعد (Throttled) ولم نحصل على بيانات حقيقية من قبل لهذا الرمز
                         sim.simulateStep();
@@ -1131,10 +1246,12 @@
                 const ma9 = sim.getMA(9);
                 const ma20 = sim.getMA(20);
                 const rsi = sim.getRSI();
+                const atr = sim.getATR();
+                const htfBullish = sim.isHigherTimeframeBullish();
                 // الحجم غير متوفر من Finnhub quote endpoint المجاني، فنعرضه تقديرياً فقط عند عدم توفر بيانات حقيقية
                 const volume = sim.usingRealData ? null : (Math.random() * 10000000);
 
-                latestQuotes[symbol] = { price, ma9, ma20, rsi, volume, isReal: sim.usingRealData };
+                latestQuotes[symbol] = { price, ma9, ma20, rsi, atr, volume, isReal: sim.usingRealData, htfBullish };
             }
 
             renderStockGrid();
@@ -1142,9 +1259,11 @@
 
         function renderStockGrid() {
             const grid = document.getElementById('stockGrid');
+            const dotsWrap = document.getElementById('stockDots');
             grid.innerHTML = '';
+            dotsWrap.innerHTML = '';
 
-            config.symbols.forEach(symbol => {
+            config.symbols.forEach((symbol, idx) => {
                 const q = latestQuotes[symbol];
                 if (!q) return;
 
@@ -1153,8 +1272,14 @@
                     : `${(q.volume/1000000).toFixed(1)}M`;
 
                 const sourceTag = q.isReal
-                    ? '<span style="font-size:10px; color:#22c55e; font-weight:bold;">🟢 Finnhub</span>'
-                    : '<span style="font-size:10px; color:#999;">⚪ محاكاة</span>';
+                    ? '<span style="font-size:9px; color:#22c55e; font-weight:bold;">🟢 Finnhub</span>'
+                    : '<span style="font-size:9px; color:#999;">⚪ محاكاة</span>';
+
+                const trendTag = q.htfBullish === null
+                    ? '<span style="font-size:9px; color:#999;">⏳ جمع بيانات الاتجاه</span>'
+                    : q.htfBullish
+                        ? '<span style="font-size:9px; color:#22c55e; font-weight:bold;">📈 اتجاه صاعد</span>'
+                        : '<span style="font-size:9px; color:#ef4444; font-weight:bold;">📉 لا يوجد اتجاه</span>';
 
                 grid.innerHTML += `
                     <div class="stock-card">
@@ -1162,7 +1287,10 @@
                             <span class="stock-symbol">${symbol}</span>
                             <span class="stock-price">$${q.price.toFixed(2)}</span>
                         </div>
-                        <div style="margin-bottom: 8px;">${sourceTag}</div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                            ${sourceTag}
+                            ${trendTag}
+                        </div>
                         <div class="stock-stats">
                             <div class="stat-item">
                                 <div class="stat-label">MA9</div>
@@ -1177,13 +1305,27 @@
                                 <div class="stat-value">${q.rsi.toFixed(1)}</div>
                             </div>
                             <div class="stat-item">
-                                <div class="stat-label">Vol</div>
-                                <div class="stat-value">${volDisplay}</div>
+                                <div class="stat-label">ATR</div>
+                                <div class="stat-value">$${q.atr.toFixed(2)}</div>
                             </div>
                         </div>
                     </div>
                 `;
+
+                dotsWrap.innerHTML += `<div class="stock-dot ${idx === 0 ? 'active' : ''}" data-idx="${idx}"></div>`;
             });
+
+            // مزامنة النقاط مع التمرير (Swipe)
+            if (!grid.dataset.scrollBound) {
+                grid.addEventListener('scroll', () => {
+                    const cardWidth = grid.firstElementChild ? grid.firstElementChild.offsetWidth + 12 : 1;
+                    const activeIdx = Math.round(grid.scrollLeft / cardWidth);
+                    document.querySelectorAll('.stock-dot').forEach((dot, i) => {
+                        dot.classList.toggle('active', i === activeIdx);
+                    });
+                });
+                grid.dataset.scrollBound = 'true';
+            }
         }
 
         // Checklist
@@ -1246,21 +1388,32 @@
 
         // Recommendations
         /**
-         * ⚙️ منطق توليد التوصيات (Confluence Logic)
-         * 
-         * التوصية تُولد عندما تتجمع 3 أو أكثر من الشروط التالية:
-         * 
-         * 1️⃣ MA Crossover: MA9 > MA20 + السعر > MA9
-         * 2️⃣ RSI Neutral: RSI بين 40-60 (قوة شراء وسطية)
-         * 3️⃣ Price Breakout: السعر قريب من القمة + RSI > 50
-         * 4️⃣ Volume Surge: حجم التداول > المتوسط
-         * 5️⃣ Trend Confirmation: تأكيد الاتجاه (MA9 > MA20)
-         * 
-         * كل شرط = نقطة واحدة (Confluence)
-         * الحد الأدنى: 3 نقاط (قابل للتغيير من الإعدادات)
+         * ⚙️ منطق توليد التوصيات (Confluence Logic) - نسخة مُصححة
+         *
+         * ✅ شرط بوابة إلزامي (Gate) قبل أي شيء:
+         *    تأكيد الفريم الأعلى (HTF) لازم يكون صاعد. لو غير صاعد أو البيانات
+         *    غير كافية بعد → لا تتولّد أي توصية إطلاقاً، بغض النظر عن نقاط الـ Confluence.
+         *    هذا يمنع الدخول عكس الاتجاه العام.
+         *
+         * بعد اجتياز البوابة، 5 شروط مستقلة فعلياً عن بعضها (لا تكرار):
+         *
+         * 1️⃣ MA Crossover: MA9 > MA20 (اتجاه صاعد قصير المدى)
+         * 2️⃣ Price Above MA9: السعر الحالي فوق MA9 (زخم إيجابي حالي)
+         * 3️⃣ RSI Neutral-Bullish: RSI بين 45-65 (قوة بدون تشبع شرائي)
+         * 4️⃣ Volume Surge: حجم التداول > المتوسط (تأكيد بمشاركة حقيقية)
+         * 5️⃣ Volatility OK: ATR ضمن مدى معقول (لا سوق ميت ولا فوضى تقلب متطرف)
+         *
+         * كل شرط = نقطة واحدة، الحد الأدنى قابل للتغيير من الإعدادات (افتراضي 3/5)
+         *
+         * 🎯 TP/SL ديناميكي حسب ATR (بدل نسبة ثابتة لكل الأسهم):
+         *    SL = Entry - (1.5 × ATR)
+         *    TP1 = Entry + (1.5 × ATR)   → نفس مسافة الخطر (R:R ≈ 1:1)
+         *    TP2 = Entry + (3.0 × ATR)   → ضعف مسافة الخطر (R:R ≈ 1:2)
+         *    هذا يتكيف تلقائياً مع تقلب كل سهم بدل رقم عشوائي ثابت.
+         *
          * إذا كانت هناك توصية مثبتة = لا توليد توصيات جديدة
          */
-        
+
         function generateRecommendation() {
             // إذا كانت هناك توصية مثبتة، توقف التوليد
             if (pinnedRecommendation) {
@@ -1276,44 +1429,59 @@
             const ma9 = q.ma9;
             const ma20 = q.ma20;
             const rsi = q.rsi;
+            const atr = q.atr;
             const volume = q.volume === null ? 6000000 : q.volume; // تقدير محايد عند عدم توفر الحجم من البيانات الحقيقية
             const avgVolume = 5000000;
-            
-            // حساب Confluence Score
+
+            // ===== بوابة إلزامية: تأكيد الاتجاه العام (فريم أعلى) =====
+            // لو البيانات غير كافية بعد (null) أو الاتجاه غير صاعد → لا توصية، نقطة، بدون استثناء
+            if (q.htfBullish !== true) {
+                return;
+            }
+
+            // ===== حساب Confluence Score من 5 شروط مستقلة فعلياً =====
             let confluence = 0;
-            
-            // ✅ Condition 1: MA Crossover
-            if (ma9 > ma20 && price > ma9) confluence++;
-            
-            // ✅ Condition 2: RSI Neutral
-            if (rsi >= 40 && rsi <= 60) confluence++;
-            
-            // ✅ Condition 3: Price Breakout
-            if (price >= ma20 * 1.01 && rsi > 50) confluence++;
-            
-            // ✅ Condition 4: Volume Surge
-            if (volume > avgVolume) confluence++;
-            
-            // ✅ Condition 5: Trend Confirmation
-            if (ma9 > ma20) confluence++;
-            
+            const reasons = [];
+
+            // 1️⃣ MA Crossover (اتجاه قصير المدى)
+            if (ma9 > ma20) { confluence++; reasons.push('MA9 > MA20'); }
+
+            // 2️⃣ Price Above MA9 (زخم حالي) - مستقل عن الشرط 1
+            if (price > ma9) { confluence++; reasons.push('السعر > MA9'); }
+
+            // 3️⃣ RSI Neutral-Bullish (قوة بدون تشبع شرائي)
+            if (rsi >= 45 && rsi <= 65) { confluence++; reasons.push('RSI 45-65'); }
+
+            // 4️⃣ Volume Surge (تأكيد بمشاركة حقيقية)
+            if (volume > avgVolume) { confluence++; reasons.push('Volume مرتفع'); }
+
+            // 5️⃣ Volatility OK (تقلب معقول، لا سوق ميت ولا فوضى)
+            const atrPct = (atr / price) * 100;
+            if (atrPct >= 0.1 && atrPct <= 3) { confluence++; reasons.push('تقلب طبيعي'); }
+
             // التحقق من الحد الأدنى
             if (confluence < config.confluenceMin) return;
-            
-            // حساب الأهداف والإيقاف
-            const entry = price.toFixed(2);
-            const tp1 = (parseFloat(entry) * 1.015).toFixed(2);
-            const tp2 = (parseFloat(entry) * 1.030).toFixed(2);
-            const sl = (parseFloat(entry) * 0.985).toFixed(2);
-            const rr = ((parseFloat(tp2) - parseFloat(entry)) / (parseFloat(entry) - parseFloat(sl))).toFixed(2);
-            
+
+            // ===== حساب الأهداف والإيقاف بناءً على ATR (ديناميكي حسب تقلب السهم الفعلي) =====
+            const entryNum = price;
+            const slDistance = atr * 1.5;
+            const tp1Num = entryNum + slDistance;       // R:R ≈ 1:1
+            const tp2Num = entryNum + (atr * 3.0);      // R:R ≈ 1:2
+            const slNum = entryNum - slDistance;
+
+            const entry = entryNum.toFixed(2);
+            const tp1 = tp1Num.toFixed(2);
+            const tp2 = tp2Num.toFixed(2);
+            const sl = slNum.toFixed(2);
+            const rr = ((tp2Num - entryNum) / (entryNum - slNum)).toFixed(2);
+
             // حفظ التوصية
             pinnedRecommendation = {
-                symbol, entry, tp1, tp2, sl, rr, confluence
+                symbol, entry, tp1, tp2, sl, rr, confluence, reasons
             };
-            
+
             displayRecommendation();
-            
+
             if (config.soundEnabled) {
                 playSound();
             }
@@ -1322,8 +1490,9 @@
         function displayRecommendation() {
             if (!pinnedRecommendation) return;
             
-            const { symbol, entry, tp1, tp2, sl, rr, confluence } = pinnedRecommendation;
+            const { symbol, entry, tp1, tp2, sl, rr, confluence, reasons } = pinnedRecommendation;
             const container = document.getElementById('recommendationContainer');
+            const reasonsHtml = (reasons || []).map(r => `<span style="background:#eef0ff; color:#667eea; padding:3px 8px; border-radius:10px; font-size:11px; margin-left:5px;">✓ ${r}</span>`).join('');
             
             container.innerHTML = `
                 <div class="recommendation-card rec-pinned">
@@ -1331,6 +1500,7 @@
                         🎯 توصية شراء - ${symbol}
                         <span class="confluence-badge">Confluence: ${confluence}/5</span>
                     </div>
+                    <div style="margin-bottom: 15px; line-height: 2;">${reasonsHtml}</div>
                     <div class="rec-grid">
                         <div class="rec-item">
                             <div class="rec-label">نقطة الدخول</div>
