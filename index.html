@@ -17,6 +17,7 @@
             min-height: 100vh;
             padding: 10px;
             color: #333;
+            font-size: 16px;
         }
 
         .container {
@@ -36,7 +37,7 @@
         }
 
         .header h1 {
-            font-size: 20px;
+            font-size: 23px;
             margin-bottom: 4px;
         }
 
@@ -66,29 +67,29 @@
 
 
         .clock-flag {
-            font-size: 20px;
+            font-size: 22px;
             margin-bottom: 2px;
         }
 
         .clock-label {
-            font-size: 9px;
+            font-size: 10px;
             opacity: 0.9;
             text-transform: uppercase;
             letter-spacing: 0.3px;
         }
 
         .clock-time {
-            font-size: 13px;
+            font-size: 15px;
             font-weight: bold;
             font-variant-numeric: tabular-nums;
         }
 
         .market-status-center {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 8px;
             flex: 1;
             min-width: 0;
             background: rgba(255,255,255,0.18);
@@ -96,8 +97,20 @@
             padding: 8px 10px;
         }
 
+        .market-status-icon {
+            font-size: 24px;
+            line-height: 1;
+        }
+
+        .market-status-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
         .market-status-label {
-            font-size: 9px;
+            font-size: 10px;
             opacity: 0.9;
         }
 
@@ -105,7 +118,7 @@
             display: inline-block;
             padding: 3px 10px;
             border-radius: 20px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
             white-space: nowrap;
         }
@@ -194,18 +207,18 @@
 
         .stock-card {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            border-radius: 12px;
-            padding: 14px;
-            border-left: 4px solid #667eea;
+            border-radius: 14px;
+            padding: 20px;
+            border-left: 5px solid #667eea;
             transition: transform 0.2s ease;
-            flex: 0 0 82%;
-            max-width: 260px;
+            flex: 0 0 92%;
+            max-width: 420px;
             scroll-snap-align: start;
         }
 
         @media (min-width: 480px) {
             .stock-card {
-                flex-basis: 240px;
+                flex-basis: 380px;
             }
         }
 
@@ -216,38 +229,38 @@
         .stock-dots {
             display: flex;
             justify-content: center;
-            gap: 6px;
-            margin-bottom: 16px;
+            gap: 8px;
+            margin-bottom: 18px;
         }
 
         .stock-dot {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background: #d0d0d0;
         }
 
         .stock-dot.active {
             background: #667eea;
-            width: 16px;
-            border-radius: 3px;
+            width: 20px;
+            border-radius: 4px;
         }
 
         .stock-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .stock-symbol {
-            font-size: 16px;
+            font-size: 24px;
             font-weight: bold;
             color: #333;
         }
 
         .stock-price {
-            font-size: 17px;
+            font-size: 26px;
             font-weight: bold;
             color: #667eea;
         }
@@ -255,27 +268,27 @@
         .stock-stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            font-size: 11px;
+            gap: 10px;
+            font-size: 14px;
         }
 
         .stat-item {
             background: rgba(255,255,255,0.8);
-            padding: 6px 8px;
-            border-radius: 6px;
+            padding: 12px 14px;
+            border-radius: 8px;
         }
 
         .stat-label {
             color: #666;
             font-weight: 600;
-            font-size: 10px;
+            font-size: 12px;
         }
 
         .stat-value {
             color: #667eea;
             font-weight: bold;
-            margin-top: 2px;
-            font-size: 12px;
+            margin-top: 4px;
+            font-size: 16px;
         }
 
         /* Checklist */
@@ -518,28 +531,28 @@
         /* Statistics */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
             margin-bottom: 30px;
         }
 
         .stat-card {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             border-radius: 12px;
-            padding: 20px;
+            padding: 18px 12px;
             text-align: center;
             border-left: 4px solid #667eea;
         }
 
         .stat-card-value {
-            font-size: 32px;
+            font-size: 34px;
             font-weight: bold;
             color: #667eea;
             margin: 10px 0;
         }
 
         .stat-card-label {
-            font-size: 14px;
+            font-size: 15px;
             color: #666;
             font-weight: 600;
         }
@@ -786,10 +799,6 @@
                 padding: 12px 10px;
             }
 
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
             .rec-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -809,8 +818,11 @@
                 </div>
 
                 <div class="market-status-center">
-                    <div class="market-status-label">السوق</div>
-                    <div class="status-badge" id="marketStatus">Loading...</div>
+                    <div class="market-status-icon">📊</div>
+                    <div class="market-status-text">
+                        <div class="market-status-label">السوق</div>
+                        <div class="status-badge" id="marketStatus">Loading...</div>
+                    </div>
                 </div>
 
                 <div class="clock-item">
@@ -1272,14 +1284,14 @@
                     : `${(q.volume/1000000).toFixed(1)}M`;
 
                 const sourceTag = q.isReal
-                    ? '<span style="font-size:9px; color:#22c55e; font-weight:bold;">🟢 Finnhub</span>'
-                    : '<span style="font-size:9px; color:#999;">⚪ محاكاة</span>';
+                    ? '<span style="font-size:13px; color:#22c55e; font-weight:bold;">🟢 Finnhub</span>'
+                    : '<span style="font-size:13px; color:#999;">⚪ محاكاة</span>';
 
                 const trendTag = q.htfBullish === null
-                    ? '<span style="font-size:9px; color:#999;">⏳ جمع بيانات الاتجاه</span>'
+                    ? '<span style="font-size:13px; color:#999;">⏳ جمع بيانات الاتجاه</span>'
                     : q.htfBullish
-                        ? '<span style="font-size:9px; color:#22c55e; font-weight:bold;">📈 اتجاه صاعد</span>'
-                        : '<span style="font-size:9px; color:#ef4444; font-weight:bold;">📉 لا يوجد اتجاه</span>';
+                        ? '<span style="font-size:13px; color:#22c55e; font-weight:bold;">📈 اتجاه صاعد</span>'
+                        : '<span style="font-size:13px; color:#ef4444; font-weight:bold;">📉 لا يوجد اتجاه</span>';
 
                 grid.innerHTML += `
                     <div class="stock-card">
@@ -1287,7 +1299,7 @@
                             <span class="stock-symbol">${symbol}</span>
                             <span class="stock-price">$${q.price.toFixed(2)}</span>
                         </div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 12px;">
                             ${sourceTag}
                             ${trendTag}
                         </div>
