@@ -2,8 +2,22 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Scalping Assistant v1.0</title>
+
+    <!-- PWA: ربط الـ Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#667eea">
+
+    <!-- PWA: دعم آيفون (Add to Home Screen عبر Safari) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Scalping">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23667eea' width='192' height='192'/><text x='96' y='96' font-size='60' fill='%23fff' text-anchor='middle' dy='.3em'>🎯</text></svg>">
+
+    <!-- أيقونة المتصفح/التبويب -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23667eea' width='192' height='192'/><text x='96' y='96' font-size='60' fill='%23fff' text-anchor='middle' dy='.3em'>🎯</text></svg>">
+
     <style>
         * {
             margin: 0;
@@ -1167,6 +1181,15 @@
         }
 
         // Initialize
+        // PWA: تسجيل الـ Service Worker (يفعّل التثبيت وطلبات العمل بدون إنترنت)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.log('Service Worker registration failed:', err);
+                });
+            });
+        }
+
         window.addEventListener('DOMContentLoaded', async () => {
             loadSettings();
             initializeTabs();
