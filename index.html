@@ -818,6 +818,7 @@
             }
         }
     .market-status-center{flex-direction:column;gap:6px}.market-status-head{display:flex;align-items:center;gap:6px}.market-status-label{font-size:13px}.market-status-icon{font-size:22px}
+    .result-item.timeout{border-left-color:#999}
     </style>
 </head>
 <body>
@@ -884,7 +885,7 @@
         <div id="recommendations" class="tab-content">
             <h2>التوصيات الذكية</h2>
             <div id="recommendationContainer">
-                <div class="no-recommendation">لا توجد توصيات حالياً 📭</div>
+                <div class="no-recommendation">لا توجد توصيات حالياً 📭<br><small>التوصيات الحية متوقفة افتراضياً، فعّلها من الإعدادات بعد أن تثبت الباك تست ميزة.</small></div>
             </div>
         </div>
 
@@ -930,10 +931,13 @@
                         <option value="gap">فجوة الافتتاح (Gap & Go)</option>
                         <option value="bb">اختراق تضيّق بولينجر</option>
                     </select></div>
+                <div class="form-group"><label class="form-label">الاتجاه</label><select id="btDir" class="form-input"><option value="1">شراء</option><option value="-1">بيع</option></select></div>
                 <div class="form-group"><label class="form-label">المدة</label>
                     <select id="btMonths" class="form-input"><option value="6">6 شهور</option><option value="9">9 شهور</option><option value="12" selected>12 شهر</option><option value="24">24 شهر</option></select></div>
                 <div class="form-group"><label class="form-label">تكلفة الصفقة % (سبريد + عمولة)</label>
                     <input id="btCost" type="number" class="form-input" value="0.1" step="0.05" min="0"></div>
+                <div class="form-group"><label class="form-label">أقصى وقف %</label><input id="btMaxSl" type="number" class="form-input" value="1" step="0.1" min="0.1"></div>
+                <div class="form-group"><label class="form-label">أقصى هدف %</label><input id="btMaxTp" type="number" class="form-input" value="2" step="0.1" min="0.1"></div>
                 <button class="btn-primary" style="width:100%" onclick="btDownload()">⬇️ تحميل البيانات (مرة وحدة)</button>
                 <button class="btn-primary" style="width:100%;margin-top:10px" onclick="btRun()">▶️ شغّل الباك تست</button>
                 <button class="btn-primary" style="width:100%;margin-top:10px;background:#764ba2" onclick="btCompareAll()">📊 قارن الاستراتيجيات الست</button>
@@ -958,6 +962,8 @@
                 <button class="btn-primary" onclick="saveFinnhubKey()">💾 حفظ المفتاح</button>
             </div>
 
+            <div class="settings-section"><div class="settings-title">🎯 التوصيات الحية</div>
+                <div class="toggle-switch"><span>تفعيل (متوقفة حتى تثبت الباك تست)</span><label class="switch"><input type="checkbox" id="liveToggle" onchange="config.liveRecs=this.checked;localStorage.setItem('tradingAppSettings',JSON.stringify(config))"><span class="slider"></span></label></div></div>
             <div class="settings-section">
                 <div class="settings-title">🕯️ مفتاح Twelve Data (الشموع)</div>
                 <div class="form-group"><input type="text" id="tdKey" class="form-input" placeholder="Twelve Data API key" style="direction:ltr"></div>
@@ -1521,37 +1527,36 @@
         const lastRecTime = {};
 
         async function generateRecommendation() {
-            if (pinnedRecommendation || !config.tdKey) return;
+            if (!config.liveRecs || pinnedRecommendation || !config.tdKey) return;
             if (dailyTradesCount >= SCALP.maxDailyTrades || consecutiveLosses >= SCALP.maxConsecutiveLosses || !isUSMarketOpen()) return;
+            const L = limits((config.cost ?? 0.1) / 100), s = liveDir;
             for (const symbol of config.symbols) {
                 if (Date.now() - (lastRecTime[symbol] || 0) < SCALP.cooldownMs) continue;
                 let D; try { D = await liveCandles(symbol); } catch (e) { continue; }
                 if (!D || pinnedRecommendation) continue;
-                const i = D.c.length - 2; // آخر شمعة مكتملة
-                if (!signal(D, i, P, liveStrat)) continue;
-                const q = latestQuotes[symbol];
-                const entry = q && q.isReal ? q.price : D.c[i + 1].c, r = D.atr[i] * P.sl, tp2 = entry + r * P.tp;
-                if (q && q.day && tp2 > q.day.high) continue; // الهدف لازم يبقى داخل مدى اليوم
-                pinnedRecommendation = {
-                    symbol, entry: entry.toFixed(2), tp1: (entry + r).toFixed(2), tp2: tp2.toFixed(2), sl: (entry - r).toFixed(2),
-                    rr: P.tp.toFixed(2), confluence: 5,
-                    reasons: ['فوق VWAP', 'اتجاه EMA60 صاعد', 'تراجع ثم ارتداد', 'RSI ' + D.rsi[i].toFixed(0), 'حجم مرتفع']
-                };
+                const i = D.c.length - 2;
+                if (!signal(D, i, P, liveStrat, s)) continue;
+                const q = latestQuotes[symbol], entry = q && q.isReal ? q.price : D.c[i + 1].c, r = D.atr[i] * P.sl;
+                if (!okRisk(entry, r, P, L)) continue;
+                pinnedRecommendation = { symbol, dir: s, entry: entry.toFixed(2), tp1: (entry + s * r).toFixed(2), tp2: (entry + s * r * P.tp).toFixed(2), sl: (entry - s * r).toFixed(2),
+                    rr: P.tp.toFixed(2), confluence: 5, reasons: [STRAT_NAMES[liveStrat], s > 0 ? 'شراء' : 'بيع', 'وقف ' + (r / entry * 100).toFixed(2) + '%'], day: nyDay() };
+                localStorage.setItem('pinnedRec', JSON.stringify(pinnedRecommendation));
                 lastRecTime[symbol] = Date.now(); displayRecommendation(); if (config.soundEnabled) playSound(); return;
             }
         }
 
+
         function displayRecommendation() {
             if (!pinnedRecommendation) return;
             
-            const { symbol, entry, tp1, tp2, sl, rr, confluence, reasons } = pinnedRecommendation;
+            const { symbol, entry, tp1, tp2, sl, rr, confluence, reasons, dir } = pinnedRecommendation;
             const container = document.getElementById('recommendationContainer');
             const reasonsHtml = (reasons || []).map(r => `<span style="background:#eef0ff; color:#667eea; padding:3px 8px; border-radius:10px; font-size:11px; margin-left:5px;">✓ ${r}</span>`).join('');
             
             container.innerHTML = `
                 <div class="recommendation-card rec-pinned">
                     <div class="rec-title">
-                        🎯 توصية شراء - ${symbol}
+                        🎯 توصية ${dir < 0 ? 'بيع' : 'شراء'} - ${symbol}
                         <span class="confluence-badge">Confluence: ${confluence}/5</span>
                     </div>
                     <div style="margin-bottom: 15px; line-height: 2;">${reasonsHtml}</div>
@@ -1580,6 +1585,7 @@
                     <div class="rec-actions">
                         <button class="rec-btn btn-profit" onclick="recordResult('profit')">✅ صفقة رابحة</button>
                         <button class="rec-btn btn-loss" onclick="recordResult('loss')">❌ صفقة خاسرة</button>
+                        <button class="rec-btn" style="background:#999;color:#fff" onclick="recordResult('timeout')">⏱ خروج بالوقت</button>
                     </div>
                 </div>
             `;
@@ -1619,16 +1625,12 @@
             
             if (type === 'loss') {
                 consecutiveLosses++;
-            } else {
-                consecutiveLosses = 0;
-            }
+            } else if (type === 'profit') { consecutiveLosses = 0; }
             
             dailyTradesCount++;
             
             // تحرير التوصية المثبتة
-            pinnedRecommendation = null;
-            
-            updateStatistics();
+            pinnedRecommendation = null; localStorage.removeItem('pinnedRec'); updateStatistics();
             
             const container = document.getElementById('recommendationContainer');
             container.innerHTML = `<div class="no-recommendation">✅ تم تسجيل النتيجة - جاهز لتوصية جديدة 🎯</div>`;
@@ -1660,7 +1662,7 @@
             list.innerHTML = results.slice().reverse().map(result => `
                 <div class="result-item ${result.type}">
                     <div>
-                        <span class="result-status">${result.type === 'profit' ? '✅ ربح' : '❌ خسارة'}</span>
+                        <span class="result-status">${result.type === 'profit' ? '✅ ربح' : result.type === 'timeout' ? '⏱ خروج بالوقت' : '❌ خسارة'}</span>
                         ${result.symbol}
                     </div>
                     <span class="result-time">${result.time}</span>
@@ -1751,9 +1753,11 @@
         // ===== محرك الشموع (مشترك بين التوصيات الحية والباك تست) =====
         const $ = id => document.getElementById(id);
         const wait = ms => new Promise(r => setTimeout(r, ms));
-        let P = { sl: 1, tp: 2, rsiLo: 40, rsiHi: 60, vol: 1.2 };
+        let P = { sl: 2, tp: 2, rsiLo: 40, rsiHi: 60, vol: 1.2, dev: 1 };
         try { const sp = JSON.parse(localStorage.getItem('strategyP')); if (sp) P = sp; } catch (e) {}
         let liveStrat = localStorage.getItem('liveStrat') || 'trend';
+        let liveDir = +localStorage.getItem('liveDir') || 1; P.dev = P.dev || 1;
+        const nyDay = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
         let pendingP = null;
 
         function ema(a, n) { const k = 2 / (n + 1), o = []; let e = a[0]; for (let i = 0; i < a.length; i++) { e = a[i] * k + e * (1 - k); o.push(e); } return o; }
@@ -1787,7 +1791,7 @@
                 // نطاق أول 30 دقيقة (6 شمعات 5 دقائق) من هذا اليوم
                 const mins = i - dayStartIdx;
                 if (mins < 6) {
-                    const hh = Math.max(D.orH[i - 1] || 0, x.h), ll = mins === 0 ? x.l : Math.min(D.orL[i - 1] || Infinity, x.l);
+                    const hh = mins === 0 ? x.h : Math.max(D.orH[i - 1], x.h), ll = mins === 0 ? x.l : Math.min(D.orL[i - 1], x.l);
                     D.orH[i] = hh; D.orL[i] = ll;
                 } else { D.orH[i] = D.orH[i - 1]; D.orL[i] = D.orL[i - 1]; }
 
@@ -1795,7 +1799,7 @@
                     const ch = x.c - c[i - 1].c;
                     ag = (ag * 13 + (ch > 0 ? ch : 0)) / 14; al = (al * 13 + (ch < 0 ? -ch : 0)) / 14;
                     D.rsi[i] = al === 0 ? 100 : 100 - 100 / (1 + ag / al);
-                    const tr = Math.max(x.h - x.l, Math.abs(x.h - c[i - 1].c), Math.abs(x.l - c[i - 1].c));
+                    const tr = D.d[i] !== D.d[i - 1] ? x.h - x.l : Math.max(x.h - x.l, Math.abs(x.h - c[i - 1].c), Math.abs(x.l - c[i - 1].c));
                     at = i < 15 ? (at * (i - 1) + tr) / i : (at * 13 + tr) / 14; D.atr[i] = at;
                 }
                 if (i >= 20) {
@@ -1810,84 +1814,50 @@
 
         // كل استراتيجية: تُرجع true/false على شمعة مكتملة i (شراء فقط، منطق مبسّط للمقارنة)
         const STRATS = {
-            trend(D, i, p) {
-                if (i < 70 || !D.atr[i] || !D.va[i]) return false;
-                const hm = D.hm[i]; if (hm < '09:45' || hm > '15:30') return false;
-                const x = D.c[i];
-                if (!(x.c > D.vwap[i] && x.c > D.l[i] && D.l[i] > D.l[i - 6] && D.f[i] > D.s[i])) return false;
-                let pull = false; for (let j = i - 5; j < i; j++) if (D.c[j].l <= D.f[j]) { pull = true; break; }
-                if (!pull || !(x.c > D.f[i] && x.c > x.o)) return false;
-                if (D.rsi[i] < p.rsiLo || D.rsi[i] > p.rsiHi) return false;
-                return x.v >= p.vol * D.va[i];
-            },
-            // اختراق أعلى نطاق أول 30 دقيقة، بحجم مؤكد، بعد الساعة 10:00 (بعد اكتمال النطاق)
-            orb(D, i, p) {
-                if (i < 20 || !D.atr[i] || !D.va[i] || !D.orH[i]) return false;
-                const hm = D.hm[i]; if (hm < '10:00' || hm > '15:00') return false;
-                const x = D.c[i];
-                if (!(x.c > D.orH[i] && c_prevBelow(D, i))) return false;
-                return x.v >= p.vol * D.va[i];
-            },
-            // ابتعاد شديد عن VWAP (RSI منخفض) ثم بادرة ارتداد - نتوقع رجوع للمتوسط
-            vwapRev(D, i, p) {
-                if (i < 70 || !D.atr[i]) return false;
-                const hm = D.hm[i]; if (hm < '09:45' || hm > '15:00') return false;
-                const x = D.c[i], distPct = (D.vwap[i] - x.c) / x.c * 100;
-                if (!(distPct > p.rsiLo / 10)) return false; // استخدام rsiLo كعتبة ابتعاد% (شريحة مشتركة مع RSI)
-                if (!(D.rsi[i] < 35 && x.c > x.o)) return false; // تشبّع بيعي + شمعة ارتداد خضراء
-                return true;
-            },
-            // ارتداد من دعم Pivot اليوم السابق، أو اختراق مقاومته
-            sr(D, i, p) {
-                if (i < 20 || !D.atr[i] || !D.pivS1[i]) return false;
-                const hm = D.hm[i]; if (hm < '09:45' || hm > '15:30') return false;
-                const x = D.c[i], nearS1 = Math.abs(x.l - D.pivS1[i]) / x.c < 0.004;
-                if (!(nearS1 && x.c > x.o && x.c > D.pivS1[i])) return false;
-                return x.v >= p.vol * D.va[i];
-            },
-            // فجوة صعودية في الافتتاح + استمرار (أول ساعة فقط)
-            gap(D, i, p) {
-                if (i < 3 || !D.atr[i] || !D.prevClose[i]) return false;
-                const hm = D.hm[i]; if (hm < '09:35' || hm > '10:15') return false;
-                const gapPct = (D.dOpen[i] - D.prevClose[i]) / D.prevClose[i] * 100;
-                if (!(gapPct > 1)) return false;
-                const x = D.c[i];
-                return x.c > D.dOpen[i] && x.c > x.o;
-            },
-            // اختراق تضيّق بولينجر (تقلب منخفض ثم اختراق للأعلى)
-            bb(D, i, p) {
-                if (i < 25 || !D.bbW[i] || !D.va[i]) return false;
-                const hm = D.hm[i]; if (hm < '09:45' || hm > '15:30') return false;
-                let minW = Infinity; for (let j = i - 10; j < i; j++) minW = Math.min(minW, D.bbW[j]);
-                if (!(D.bbW[i - 1] < minW * 1.3)) return false; // كان مضيّق قبل شمعة
-                const x = D.c[i];
-                if (!(x.c > D.bbU[i])) return false;
-                return x.v >= p.vol * D.va[i];
-            }
+            trend(D, i, p, s) { if (i < 70 || !D.atr[i] || !D.va[i]) return false; const hm = D.hm[i]; if (hm < '09:45' || hm > '15:30') return false; const x = D.c[i];
+                if (!(s * (x.c - D.vwap[i]) > 0 && s * (x.c - D.l[i]) > 0 && s * (D.l[i] - D.l[i - 6]) > 0 && s * (D.f[i] - D.s[i]) > 0)) return false;
+                let pull = false; for (let j = i - 5; j < i; j++) if (s > 0 ? D.c[j].l <= D.f[j] : D.c[j].h >= D.f[j]) { pull = true; break; }
+                if (!pull || !(s * (x.c - D.f[i]) > 0 && s * (x.c - x.o) > 0)) return false;
+                const r = s > 0 ? D.rsi[i] : 100 - D.rsi[i]; if (r < p.rsiLo || r > p.rsiHi) return false; return x.v >= p.vol * D.va[i]; },
+            orb(D, i, p, s) { if (i < 20 || !D.atr[i] || !D.va[i] || !D.orH[i]) return false; const hm = D.hm[i]; if (hm < '10:00' || hm > '15:00') return false; const x = D.c[i];
+                if (s > 0 ? !(x.c > D.orH[i]) : !(x.c < D.orL[i])) return false;
+                let f = false; for (let j = i - 3; j < i; j++) if (s > 0 ? D.c[j].c <= D.orH[j] : D.c[j].c >= D.orL[j]) { f = true; break; }
+                return f && x.v >= p.vol * D.va[i]; },
+            vwapRev(D, i, p, s) { if (i < 70 || !D.atr[i]) return false; const hm = D.hm[i]; if (hm < '09:45' || hm > '15:00') return false; const x = D.c[i];
+                if (!(s * (D.vwap[i] - x.c) / x.c * 100 > p.dev)) return false; const r = s > 0 ? D.rsi[i] : 100 - D.rsi[i]; return r < 35 && s * (x.c - x.o) > 0; },
+            sr(D, i, p, s) { const lv = s > 0 ? D.pivS1[i] : D.pivR1[i]; if (i < 20 || !D.atr[i] || !lv || !D.va[i]) return false; const hm = D.hm[i]; if (hm < '09:45' || hm > '15:30') return false; const x = D.c[i];
+                return Math.abs((s > 0 ? x.l : x.h) - lv) / x.c < 0.004 && s * (x.c - x.o) > 0 && s * (x.c - lv) > 0 && x.v >= p.vol * D.va[i]; },
+            gap(D, i, p, s) { if (i < 3 || !D.atr[i] || !D.prevClose[i]) return false; const hm = D.hm[i]; if (hm < '09:35' || hm > '10:15') return false;
+                const g = (D.dOpen[i] - D.prevClose[i]) / D.prevClose[i] * 100; if (!(s * g > 1)) return false; const x = D.c[i]; return s * (x.c - D.dOpen[i]) > 0 && s * (x.c - x.o) > 0; },
+            bb(D, i, p, s) { if (i < 25 || !D.bbW[i] || !D.va[i]) return false; const hm = D.hm[i]; if (hm < '09:45' || hm > '15:30') return false;
+                let m = Infinity; for (let j = i - 10; j < i; j++) m = Math.min(m, D.bbW[j]); if (!(D.bbW[i - 1] < m * 1.3)) return false; const x = D.c[i];
+                return (s > 0 ? x.c > D.bbU[i] : x.c < D.bbL[i]) && x.v >= p.vol * D.va[i]; }
         };
-        function c_prevBelow(D, i) { for (let j = i - 3; j < i; j++) if (D.c[j].c <= D.orH[j]) return true; return false; }
+        function signal(D, i, p, strat, s) { return STRATS[strat](D, i, p, s || 1); }
 
-        function signal(D, i, p, strat) { return STRATS[strat](D, i, p); }
+        // حدود الوقف/الهدف: الأدنى من التكلفة (لا تأكل أكثر من 0.2R)، والأقصى من هدفك اليومي
+        function limits(cost) { return { min: cost * 100 / 0.2, maxSl: config.maxStopPct || 1, maxTp: config.maxTargetPct || 2 }; }
+        function okRisk(e, r, p, L) { const sp = r / e * 100; return sp >= L.min && sp <= L.maxSl && sp * p.tp <= L.maxTp; }
 
-        // محاكاة: دخول على افتتاح الشمعة التالية، وقف SL×ATR، هدف TP×R، وإذا لمس الاثنين بنفس الشمعة نعتبر الوقف أولاً
-        function sim(D, p, from, to, cost, strat) {
-            const c = D.c, out = []; let i = Math.max(from, 70);
+        // dir: 1 شراء، -1 بيع. دخول على افتتاح الشمعة التالية، ولو لمست الشمعة الوقف والهدف معاً نعتبر الوقف أولاً
+        function sim(D, p, from, to, cost, strat, dir) {
+            const s = dir || 1, c = D.c, out = [], L = limits(cost); let i = Math.max(from, 70);
             while (i < to - 1) {
-                if (!signal(D, i, p, strat)) { i++; continue; }
-                const e = c[i + 1].o, r = D.atr[i] * p.sl; if (!(r > 0)) { i++; continue; }
-                const sl = e - r, tp = e + r * p.tp, day = D.d[i + 1]; let res = null, j = i + 1;
+                if (!signal(D, i, p, strat, s)) { i++; continue; }
+                const e = c[i + 1].o, r = D.atr[i] * p.sl; if (!(r > 0) || !okRisk(e, r, p, L)) { i++; continue; }
+                const sl = e - s * r, tp = e + s * r * p.tp, day = D.d[i + 1]; let res = null, j = i + 1;
                 for (; j < to; j++) {
-                    if (D.d[j] !== day) { res = (c[j - 1].c - e) / r; j--; break; }
-                    if (c[j].l <= sl) { res = -1; break; }
-                    if (c[j].h >= tp) { res = p.tp; break; }
-                    if (D.hm[j] >= '15:55') { res = (c[j].c - e) / r; break; }
+                    if (D.d[j] !== day) { res = s * (c[j - 1].c - e) / r; j--; break; }
+                    if (s > 0 ? c[j].l <= sl : c[j].h >= sl) { res = -1; break; }
+                    if (s > 0 ? c[j].h >= tp : c[j].l <= tp) { res = p.tp; break; }
+                    if (D.hm[j] >= '15:55') { res = s * (c[j].c - e) / r; break; }
                 }
                 if (res === null) break;
-                out.push({ t: c[i + 1].t, r: res - cost * e / r });
-                i = j + 1;
+                out.push({ t: c[i + 1].t, r: res - cost * e / r }); i = j + 1;
             }
             return out;
         }
+
 
         function stats(tr, days) {
             const n = tr.length; if (!n) return { n: 0, win: 0, exp: 0, tot: 0, dd: 0, pf: 0, pd: 0 };
@@ -1952,83 +1922,56 @@
         const fmt = st => st.n ? `${st.n} صفقة · فوز ${st.win.toFixed(0)}% · متوسط ${st.exp.toFixed(2)}R · إجمالي ${st.tot.toFixed(1)}R · أكبر تراجع ${st.dd.toFixed(1)}R · ${st.pd.toFixed(2)} صفقة/يوم` : 'لا صفقات';
         const fmtP = p => `وقف ${p.sl}×ATR · هدف ${p.tp}R · RSI ${p.rsiLo}-${p.rsiHi} · حجم ×${p.vol}`;
 
-        async function btRun() {
-            const months = +$('btMonths').value, cost = (+$('btCost').value || 0) / 100, strat = $('btStrat').value, Ds = [];
-            btProg(5, 'تحميل البيانات المحفوظة...');
-            for (const s of config.symbols) { const D = await loadD(s, months); if (D) Ds.push({ s, D }); }
-            if (!Ds.length) { btProg(100, ''); return btLog('لا توجد بيانات محفوظة. اضغط "تحميل البيانات" أولاً.'); }
-
-            const run = (p, part) => {
-                let all = [], days = new Set();
-                for (const { D } of Ds) {
-                    const n = D.c.length, k = Math.floor(n * 2 / 3), a = part === 'test' ? k : 0, b = part === 'train' ? k : n;
-                    all = all.concat(sim(D, p, a, b, cost, strat)); for (let i = a; i < b; i++) days.add(D.d[i]);
-                }
-                all.sort((x, y) => x.t < y.t ? -1 : 1); return stats(all, days.size);
-            };
-
-            btProg(15, 'تشغيل المنطق الحالي...');
-            await wait(0);
-            const bySym = Ds.map(({ s, D }) => `<div>${s}: ${fmt(stats(sim(D, P, 0, D.c.length, cost, strat), new Set(D.d).size))}</div>`).join('');
-            const base = run(P, 'all');
-            let html = `<div class="results-title">${STRAT_NAMES[strat]} — المنطق الحالي (${months} شهر)</div><div style="font-size:14px;line-height:1.9">${fmtP(P)}<br><b>${fmt(base)}</b><br>${bySym}</div>`;
-            btLog(html);
-
-            const grid = [];
-            for (const sl of [0.8, 1, 1.5]) for (const tp of [1.5, 2, 3]) for (const [rsiLo, rsiHi] of [[40, 60], [45, 65], [35, 55]]) for (const vol of [1, 1.5, 2]) grid.push({ sl, tp, rsiLo, rsiHi, vol });
-            let best = null;
-            for (let gi = 0; gi < grid.length; gi++) {
-                const p = grid[gi], tr = run(p, 'train');
-                if (tr.n >= 30 && (!best || tr.exp > best.tr.exp)) best = { p, tr };
-                if (gi % 6 === 0) { btProg(15 + gi / grid.length * 80, `تجربة توليفات (${gi}/${grid.length})...`); await wait(0); }
-            }
-            pendingP = null;
-            btProg(100, '');
-            if (!best) return btLog(html + '<br>عدد الصفقات قليل جداً للاقتراح. جرّب مدة أطول.');
-            const te = run(best.p, 'test'), cur = run(P, 'test');
-            html += `<div class="results-title" style="margin-top:14px">أفضل تعديل (اختير من أول ثلثين، ثم اختُبر على آخر ثلث)</div><div style="font-size:14px;line-height:1.9">${fmtP(best.p)}<br>تدريب: ${fmt(best.tr)}<br><b>اختبار خارج العينة: ${fmt(te)}</b><br>المنطق الحالي على نفس الفترة: ${fmt(cur)}</div>`;
-            if (te.n >= 15 && te.exp > 0 && te.exp > cur.exp) {
-                pendingP = { strat, p: best.p };
-                html += `<div style="margin-top:10px;color:#15803d">التعديل تحسّن على بيانات ما اختير عليها.</div><button class="btn-primary" style="width:100%;margin-top:8px" onclick="applyP()">✅ أوافق وأطبّق التعديل</button>`;
-            } else html += `<div style="margin-top:10px;color:#b45309">لا أنصح بتعديل: التحسن ما ثبت على آخر ثلث${te.exp <= 0 ? '، والنتيجة خارج العينة غير رابحة' : ''}.</div>`;
-            btLog(html);
+        function btInputs() {
+            config.maxStopPct = +$('btMaxSl').value || 1; config.maxTargetPct = +$('btMaxTp').value || 2; config.cost = +$('btCost').value || 0;
+            localStorage.setItem('tradingAppSettings', JSON.stringify(config));
+            return { months: +$('btMonths').value, cost: config.cost / 100, strat: $('btStrat').value, dir: +$('btDir').value };
         }
-
         const STRAT_NAMES = { trend: 'اتجاه + تراجع', orb: 'اختراق نطاق الافتتاح', vwapRev: 'ارتداد VWAP', sr: 'ارتداد الدعم/المقاومة', gap: 'فجوة الافتتاح', bb: 'اختراق بولينجر' };
-
-        // يقارن الاستراتيجيات الست بإعدادات ثابتة معقولة (بدون بحث توليفات) على كل الأسهم والمدة المختارة
-        async function btCompareAll() {
-            const months = +$('btMonths').value, cost = (+$('btCost').value || 0) / 100, Ds = [];
-            btProg(5, 'تحميل البيانات المحفوظة...');
-            for (const s of config.symbols) { const D = await loadD(s, months); if (D) Ds.push({ s, D }); }
-            if (!Ds.length) { btProg(100, ''); return btLog('لا توجد بيانات محفوظة. اضغط "تحميل البيانات" أولاً.'); }
-
-            const fixedP = { sl: 1, tp: 2, rsiLo: 45, rsiHi: 65, vol: 1.2 };
-            const keys = Object.keys(STRATS);
-            const rows = [];
-            for (let k = 0; k < keys.length; k++) {
-                const strat = keys[k];
-                btProg(10 + k / keys.length * 85, `تشغيل: ${STRAT_NAMES[strat]}...`);
-                await wait(0);
-                let all = [], days = new Set();
-                for (const { D } of Ds) { all = all.concat(sim(D, fixedP, 0, D.c.length, cost, strat)); for (const dd of D.d) days.add(dd); }
-                rows.push({ strat, st: stats(all, days.size) });
-            }
-            rows.sort((a, b) => b.st.exp - a.st.exp);
-            btProg(100, '');
-            const html = `<div class="results-title">مقارنة الاستراتيجيات الست (${months} شهر، إعدادات موحّدة: ${fmtP(fixedP)})</div>` +
-                rows.map(r => `<div style="font-size:14px;line-height:1.9;margin-top:8px"><b>${STRAT_NAMES[r.strat]}</b><br>${fmt(r.st)}</div>`).join('') +
-                `<div style="margin-top:10px;color:#666;font-size:13px">هذي إعدادات موحّدة للمقارنة فقط، مو مُحسّنة. اختر الأفضل من فوق ثم شغّل "الباك تست" عليه لبحث أدق.</div>`;
-            btLog(html);
+        async function loadAll(m) { const a = []; for (const s of config.symbols) { const D = await loadD(s, m); if (D) a.push({ s, D }); } return a; }
+        function gridFor(st) {
+            const g = [], rs = st === 'trend' ? [[40, 60], [45, 65], [35, 55]] : [[40, 60]], dv = st === 'vwapRev' ? [0.7, 1, 1.5] : [1], vl = (st === 'gap' || st === 'vwapRev') ? [1.2] : [1, 1.5];
+            for (const sl of [1, 1.5, 2, 3]) for (const tp of [1.5, 2, 3]) for (const [rsiLo, rsiHi] of rs) for (const dev of dv) for (const vol of vl) g.push({ sl, tp, rsiLo, rsiHi, vol, dev });
+            return g;
         }
+        function runSet(Ds, p, part, cost, st, dir) {
+            let all = [], days = new Set();
+            for (const { D } of Ds) { const n = D.c.length, k = Math.floor(n * 2 / 3), a = part === 'test' ? k : 0, b = part === 'train' ? k : n; all = all.concat(sim(D, p, a, b, cost, st, dir)); for (let i = a; i < b; i++) days.add(D.d[i]); }
+            all.sort((x, y) => x.t < y.t ? -1 : 1); return stats(all, days.size);
+        }
+        async function btRun() {
+            const { months, cost, strat, dir } = btInputs(); btProg(5, 'تحميل البيانات...'); const Ds = await loadAll(months);
+            if (!Ds.length) { btProg(100, ''); return btLog('لا توجد بيانات محفوظة. اضغط "تحميل البيانات" أولاً.'); }
+            const g = gridFor(strat), L = limits(cost); let best = null;
+            for (let gi = 0; gi < g.length; gi++) {
+                const tr = runSet(Ds, g[gi], 'train', cost, strat, dir); if (tr.n >= 30 && (!best || tr.exp > best.tr.exp)) best = { p: g[gi], tr };
+                if (gi % 4 === 0) { btProg(5 + gi / g.length * 90, `تجربة توليفات (${gi}/${g.length})...`); await wait(0); }
+            }
+            btProg(100, ''); pendingP = null;
+            let h = `<div class="results-title">${STRAT_NAMES[strat]} — ${dir > 0 ? 'شراء' : 'بيع'} (${months} شهر)</div><div style="font-size:14px;line-height:1.9">الوقف المسموح ${L.min.toFixed(2)}–${L.maxSl}% · الهدف حتى ${L.maxTp}%<br>الإعداد الحالي: ${fmtP(P)}<br><b>${fmt(runSet(Ds, P, 'all', cost, strat, dir))}</b></div>`;
+            if (!best) return btLog(h + '<br>الصفقات المؤهلة أقل من 30 في التدريب. جرّب مدة أطول أو وسّع حد الوقف.');
+            const te = runSet(Ds, best.p, 'test', cost, strat, dir), cur = runSet(Ds, P, 'test', cost, strat, dir);
+            h += `<div class="results-title" style="margin-top:14px">أفضل توليفة من ${g.length} (اختيرت من أول ثلثين، واختُبرت على آخر ثلث)</div><div style="font-size:14px;line-height:1.9">${fmtP(best.p)}<br>تدريب: ${fmt(best.tr)}<br><b>اختبار خارج العينة: ${fmt(te)}</b><br>الإعداد الحالي على نفس الفترة: ${fmt(cur)}</div>`;
+            if (te.n >= 15 && te.exp > 0 && te.exp > cur.exp) { pendingP = { strat, dir, p: best.p }; h += `<div style="margin-top:10px;color:#15803d">التعديل تحسّن على بيانات ما اختير عليها (اختيار الأفضل من ${g.length} توليفة يضخّم النتيجة، فاعتبرها مبدئية).</div><button class="btn-primary" style="width:100%;margin-top:8px" onclick="applyP()">✅ أوافق وأطبّق التعديل</button>`; }
+            else h += `<div style="margin-top:10px;color:#b45309">لا أنصح بتعديل: التحسن ما ثبت على آخر ثلث${te.exp <= 0 ? '، والنتيجة خارج العينة غير رابحة' : ''}.</div>`;
+            btLog(h);
+        }
+        async function btCompareAll() {
+            const { months, cost } = btInputs(); btProg(5, 'تحميل البيانات...'); const Ds = await loadAll(months);
+            if (!Ds.length) { btProg(100, ''); return btLog('لا توجد بيانات محفوظة. اضغط "تحميل البيانات" أولاً.'); }
+            const fp = { sl: 2, tp: 2, rsiLo: 45, rsiHi: 65, vol: 1.2, dev: 1 }, keys = Object.keys(STRATS), rows = []; let k = 0;
+            for (const st of keys) for (const d of [1, -1]) { btProg(5 + k / (keys.length * 2) * 90, `${STRAT_NAMES[st]} (${d > 0 ? 'شراء' : 'بيع'})...`); await wait(0); rows.push({ st, d, s: runSet(Ds, fp, 'all', cost, st, d) }); k++; }
+            rows.sort((a, b) => b.s.exp - a.s.exp); btProg(100, ''); const L = limits(cost);
+            btLog(`<div class="results-title">مقارنة ${rows.length} إعداد (${months} شهر · ${fmtP(fp)})</div>` + rows.map(r => `<div style="font-size:14px;line-height:1.9;margin-top:8px"><b>${STRAT_NAMES[r.st]} — ${r.d > 0 ? 'شراء' : 'بيع'}</b><br>${fmt(r.s)}</div>`).join('') + `<div style="margin-top:10px;color:#666;font-size:13px">إعدادات موحّدة للمقارنة فقط. الصفقة تُقبل لو وقفها بين ${L.min.toFixed(2)}% و${L.maxSl}% وهدفها حتى ${L.maxTp}%.</div>`);
+        }
+
 
         function applyP() {
             if (!pendingP) return;
-            P = pendingP.p; liveStrat = pendingP.strat;
-            localStorage.setItem('strategyP', JSON.stringify(P));
-            localStorage.setItem('liveStrat', liveStrat);
-            pendingP = null;
-            alert('✅ تم تطبيق التعديل على التوصيات الحية'); btLog('تم التطبيق: ' + STRAT_NAMES[liveStrat] + ' — ' + fmtP(P));
+            P = pendingP.p; liveStrat = pendingP.strat; liveDir = pendingP.dir;
+            localStorage.setItem('strategyP', JSON.stringify(P)); localStorage.setItem('liveStrat', liveStrat); localStorage.setItem('liveDir', liveDir);
+            pendingP = null; const t = STRAT_NAMES[liveStrat] + ' — ' + (liveDir > 0 ? 'شراء' : 'بيع');
+            alert('✅ تم الحفظ. فعّل التوصيات الحية من الإعدادات إذا تبيها.'); btLog('تم الحفظ: ' + t + ' — ' + fmtP(P));
         }
 
         // ===== شموع التوصيات الحية (تحديث كل دقيقتين لكل سهم) =====
@@ -2046,7 +1989,11 @@
             localStorage.setItem('tradingAppSettings', JSON.stringify(config));
             alert('✅ تم حفظ مفتاح Twelve Data على هذا الجهاز');
         }
-        window.addEventListener('DOMContentLoaded', () => { $('tdKey').value = config.tdKey || ''; });
+        window.addEventListener('DOMContentLoaded', () => { $('tdKey').value = config.tdKey || ''; $('liveToggle').checked = !!config.liveRecs; $('btCost').value = config.cost ?? 0.1; $('btMaxSl').value = config.maxStopPct || 1; $('btMaxTp').value = config.maxTargetPct || 2; });
+    
+        function checkExpiry() { const p = pinnedRecommendation; if (p && (p.day !== nyDay() || getNYParts().mins >= 955)) recordResult('timeout'); }
+        try { const pr = JSON.parse(localStorage.getItem('pinnedRec')); if (pr && !pinnedRecommendation) { pinnedRecommendation = pr; displayRecommendation(); } } catch (e) {}
+        setInterval(checkExpiry, 30000); checkExpiry();
     </script>
 </body>
 </html>
