@@ -930,8 +930,8 @@
                         <option value="sr">ارتداد الدعم/المقاومة (Pivots)</option>
                         <option value="gap">فجوة الافتتاح (Gap & Go)</option>
                         <option value="bb">اختراق تضيّق بولينجر</option>
+                        <option value="all">⭐ الكل معاً (النظام كامل)</option>
                     </select></div>
-                <div class="form-group"><label class="form-label">الاتجاه</label><select id="btDir" class="form-input"><option value="1">شراء</option><option value="-1">بيع</option></select></div>
                 <div class="form-group"><label class="form-label">المدة</label>
                     <select id="btMonths" class="form-input"><option value="6">6 شهور</option><option value="9">9 شهور</option><option value="12" selected>12 شهر</option><option value="24">24 شهر</option></select></div>
                 <div class="form-group"><label class="form-label">تكلفة الصفقة % (سبريد + عمولة)</label>
@@ -1529,21 +1529,21 @@
         async function generateRecommendation() {
             if (!config.liveRecs || pinnedRecommendation || !config.tdKey) return;
             if (dailyTradesCount >= SCALP.maxDailyTrades || consecutiveLosses >= SCALP.maxConsecutiveLosses || !isUSMarketOpen()) return;
-            const L = limits((config.cost ?? 0.1) / 100), s = liveDir;
+            const L = limits((config.cost ?? 0.1) / 100), sl = stratList(liveStrat);
             for (const symbol of config.symbols) {
                 if (Date.now() - (lastRecTime[symbol] || 0) < SCALP.cooldownMs) continue;
                 let D; try { D = await liveCandles(symbol); } catch (e) { continue; }
                 if (!D || pinnedRecommendation) continue;
-                const i = D.c.length - 2;
-                if (!signal(D, i, P, liveStrat, s)) continue;
-                const q = latestQuotes[symbol], entry = q && q.isReal ? q.price : D.c[i + 1].c, r = D.atr[i] * P.sl;
+                const g = pickSignal(D, D.c.length - 2, P, sl); if (!g) continue;
+                const s = g.s, q = latestQuotes[symbol], entry = q && q.isReal ? q.price : D.c[D.c.length - 1].c, r = D.atr[D.c.length - 2] * P.sl;
                 if (!okRisk(entry, r, P, L)) continue;
                 pinnedRecommendation = { symbol, dir: s, entry: entry.toFixed(2), tp1: (entry + s * r).toFixed(2), tp2: (entry + s * r * P.tp).toFixed(2), sl: (entry - s * r).toFixed(2),
-                    rr: P.tp.toFixed(2), confluence: 5, reasons: [STRAT_NAMES[liveStrat], s > 0 ? 'شراء' : 'بيع', 'وقف ' + (r / entry * 100).toFixed(2) + '%'], day: nyDay() };
+                    rr: P.tp.toFixed(2), confluence: 5, reasons: [STRAT_NAMES[g.st], s > 0 ? 'شراء' : 'بيع', 'وقف ' + (r / entry * 100).toFixed(2) + '%'], day: nyDay() };
                 localStorage.setItem('pinnedRec', JSON.stringify(pinnedRecommendation));
                 lastRecTime[symbol] = Date.now(); displayRecommendation(); if (config.soundEnabled) playSound(); return;
             }
         }
+
 
 
         function displayRecommendation() {
@@ -1756,7 +1756,7 @@
         let P = { sl: 2, tp: 2, rsiLo: 40, rsiHi: 60, vol: 1.2, dev: 1 };
         try { const sp = JSON.parse(localStorage.getItem('strategyP')); if (sp) P = sp; } catch (e) {}
         let liveStrat = localStorage.getItem('liveStrat') || 'trend';
-        let liveDir = +localStorage.getItem('liveDir') || 1; P.dev = P.dev || 1;
+        P.dev = P.dev || 1;
         const nyDay = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
         let pendingP = null;
 
@@ -1839,12 +1839,18 @@
         function limits(cost) { return { min: cost * 100 / 0.2, maxSl: config.maxStopPct || 1, maxTp: config.maxTargetPct || 2 }; }
         function okRisk(e, r, p, L) { const sp = r / e * 100; return sp >= L.min && sp <= L.maxSl && sp * p.tp <= L.maxTp; }
 
-        // dir: 1 شراء، -1 بيع. دخول على افتتاح الشمعة التالية، ولو لمست الشمعة الوقف والهدف معاً نعتبر الوقف أولاً
-        function sim(D, p, from, to, cost, strat, dir) {
-            const s = dir || 1, c = D.c, out = [], L = limits(cost); let i = Math.max(from, 70);
+        // يفحص الاستراتيجيات المطلوبة بالاتجاهين على نفس الشمعة؛ لو تعارض اتجاهان لا صفقة
+        function pickSignal(D, i, p, strats) {
+            let f = null;
+            for (const st of strats) for (const s of [1, -1]) { if (!signal(D, i, p, st, s)) continue; if (f && f.s !== s) return null; if (!f) f = { st, s }; }
+            return f;
+        }
+        // صفقة واحدة مفتوحة لكل سهم. دخول على افتتاح الشمعة التالية، ولو لمست الشمعة الوقف والهدف معاً نعتبر الوقف أولاً
+        function sim(D, p, from, to, cost, strats) {
+            const c = D.c, out = [], L = limits(cost); let i = Math.max(from, 70);
             while (i < to - 1) {
-                if (!signal(D, i, p, strat, s)) { i++; continue; }
-                const e = c[i + 1].o, r = D.atr[i] * p.sl; if (!(r > 0) || !okRisk(e, r, p, L)) { i++; continue; }
+                const g = pickSignal(D, i, p, strats); if (!g) { i++; continue; }
+                const s = g.s, e = c[i + 1].o, r = D.atr[i] * p.sl; if (!(r > 0) || !okRisk(e, r, p, L)) { i++; continue; }
                 const sl = e - s * r, tp = e + s * r * p.tp, day = D.d[i + 1]; let res = null, j = i + 1;
                 for (; j < to; j++) {
                     if (D.d[j] !== day) { res = s * (c[j - 1].c - e) / r; j--; break; }
@@ -1853,10 +1859,11 @@
                     if (D.hm[j] >= '15:55') { res = s * (c[j].c - e) / r; break; }
                 }
                 if (res === null) break;
-                out.push({ t: c[i + 1].t, r: res - cost * e / r }); i = j + 1;
+                out.push({ t: c[i + 1].t, r: res - cost * e / r, s, st: g.st }); i = j + 1;
             }
             return out;
         }
+
 
 
         function stats(tr, days) {
@@ -1925,53 +1932,59 @@
         function btInputs() {
             config.maxStopPct = +$('btMaxSl').value || 1; config.maxTargetPct = +$('btMaxTp').value || 2; config.cost = +$('btCost').value || 0;
             localStorage.setItem('tradingAppSettings', JSON.stringify(config));
-            return { months: +$('btMonths').value, cost: config.cost / 100, strat: $('btStrat').value, dir: +$('btDir').value };
+            return { months: +$('btMonths').value, cost: config.cost / 100, strat: $('btStrat').value };
         }
-        const STRAT_NAMES = { trend: 'اتجاه + تراجع', orb: 'اختراق نطاق الافتتاح', vwapRev: 'ارتداد VWAP', sr: 'ارتداد الدعم/المقاومة', gap: 'فجوة الافتتاح', bb: 'اختراق بولينجر' };
+        const STRAT_NAMES = { trend: 'اتجاه + تراجع', orb: 'اختراق نطاق الافتتاح', vwapRev: 'ارتداد VWAP', sr: 'ارتداد الدعم/المقاومة', gap: 'فجوة الافتتاح', bb: 'اختراق بولينجر', all: 'الكل معاً (النظام كامل)' };
+        const stratList = st => st === 'all' ? Object.keys(STRATS) : [st];
         async function loadAll(m) { const a = []; for (const s of config.symbols) { const D = await loadD(s, m); if (D) a.push({ s, D }); } return a; }
         function gridFor(st) {
-            const g = [], rs = st === 'trend' ? [[40, 60], [45, 65], [35, 55]] : [[40, 60]], dv = st === 'vwapRev' ? [0.7, 1, 1.5] : [1], vl = (st === 'gap' || st === 'vwapRev') ? [1.2] : [1, 1.5];
+            const g = [];
+            if (st === 'all') { for (const sl of [1.5, 2, 3]) for (const tp of [1.5, 2, 3]) g.push({ sl, tp, rsiLo: 45, rsiHi: 65, vol: 1.2, dev: 1 }); return g; }
+            const rs = st === 'trend' ? [[40, 60], [45, 65], [35, 55]] : [[40, 60]], dv = st === 'vwapRev' ? [0.7, 1, 1.5] : [1], vl = (st === 'gap' || st === 'vwapRev') ? [1.2] : [1, 1.5];
             for (const sl of [1, 1.5, 2, 3]) for (const tp of [1.5, 2, 3]) for (const [rsiLo, rsiHi] of rs) for (const dev of dv) for (const vol of vl) g.push({ sl, tp, rsiLo, rsiHi, vol, dev });
             return g;
         }
-        function runSet(Ds, p, part, cost, st, dir) {
-            let all = [], days = new Set();
-            for (const { D } of Ds) { const n = D.c.length, k = Math.floor(n * 2 / 3), a = part === 'test' ? k : 0, b = part === 'train' ? k : n; all = all.concat(sim(D, p, a, b, cost, st, dir)); for (let i = a; i < b; i++) days.add(D.d[i]); }
-            all.sort((x, y) => x.t < y.t ? -1 : 1); return stats(all, days.size);
+        function runSet(Ds, p, part, cost, st) {
+            let all = [], days = new Set(); const sl = stratList(st);
+            for (const { D } of Ds) { const n = D.c.length, k = Math.floor(n * 2 / 3), a = part === 'test' ? k : 0, b = part === 'train' ? k : n; all = all.concat(sim(D, p, a, b, cost, sl)); for (let i = a; i < b; i++) days.add(D.d[i]); }
+            all.sort((x, y) => x.t < y.t ? -1 : 1); const r = stats(all, days.size); r.trades = all; return r;
         }
+        function brk(r, kf) { const m = {}; for (const t of r.trades || []) (m[kf(t)] = m[kf(t)] || []).push(t.r); return Object.entries(m).map(([k, a]) => `${k}: ${a.length} · ${(a.reduce((x, y) => x + y, 0) / a.length).toFixed(2)}R`).join(' | '); }
+        const dirK = t => t.s > 0 ? 'شراء' : 'بيع', stK = t => STRAT_NAMES[t.st];
         async function btRun() {
-            const { months, cost, strat, dir } = btInputs(); btProg(5, 'تحميل البيانات...'); const Ds = await loadAll(months);
+            const { months, cost, strat } = btInputs(); btProg(5, 'تحميل البيانات...'); const Ds = await loadAll(months);
             if (!Ds.length) { btProg(100, ''); return btLog('لا توجد بيانات محفوظة. اضغط "تحميل البيانات" أولاً.'); }
             const g = gridFor(strat), L = limits(cost); let best = null;
             for (let gi = 0; gi < g.length; gi++) {
-                const tr = runSet(Ds, g[gi], 'train', cost, strat, dir); if (tr.n >= 30 && (!best || tr.exp > best.tr.exp)) best = { p: g[gi], tr };
-                if (gi % 4 === 0) { btProg(5 + gi / g.length * 90, `تجربة توليفات (${gi}/${g.length})...`); await wait(0); }
+                const tr = runSet(Ds, g[gi], 'train', cost, strat); if (tr.n >= 30 && (!best || tr.exp > best.tr.exp)) best = { p: g[gi], tr };
+                if (gi % 2 === 0) { btProg(5 + gi / g.length * 90, `تجربة توليفات (${gi}/${g.length})...`); await wait(0); }
             }
             btProg(100, ''); pendingP = null;
-            let h = `<div class="results-title">${STRAT_NAMES[strat]} — ${dir > 0 ? 'شراء' : 'بيع'} (${months} شهر)</div><div style="font-size:14px;line-height:1.9">الوقف المسموح ${L.min.toFixed(2)}–${L.maxSl}% · الهدف حتى ${L.maxTp}%<br>الإعداد الحالي: ${fmtP(P)}<br><b>${fmt(runSet(Ds, P, 'all', cost, strat, dir))}</b></div>`;
+            const c0 = runSet(Ds, P, 'all', cost, strat);
+            let h = `<div class="results-title">${STRAT_NAMES[strat]} — شراء وبيع معاً (${months} شهر)</div><div style="font-size:14px;line-height:1.9">الوقف المسموح ${L.min.toFixed(2)}–${L.maxSl}% · الهدف حتى ${L.maxTp}%<br>الإعداد الحالي: ${fmtP(P)}<br><b>${fmt(c0)}</b><br>${brk(c0, dirK)}${strat === 'all' ? '<br>' + brk(c0, stK) : ''}</div>`;
             if (!best) return btLog(h + '<br>الصفقات المؤهلة أقل من 30 في التدريب. جرّب مدة أطول أو وسّع حد الوقف.');
-            const te = runSet(Ds, best.p, 'test', cost, strat, dir), cur = runSet(Ds, P, 'test', cost, strat, dir);
-            h += `<div class="results-title" style="margin-top:14px">أفضل توليفة من ${g.length} (اختيرت من أول ثلثين، واختُبرت على آخر ثلث)</div><div style="font-size:14px;line-height:1.9">${fmtP(best.p)}<br>تدريب: ${fmt(best.tr)}<br><b>اختبار خارج العينة: ${fmt(te)}</b><br>الإعداد الحالي على نفس الفترة: ${fmt(cur)}</div>`;
-            if (te.n >= 15 && te.exp > 0 && te.exp > cur.exp) { pendingP = { strat, dir, p: best.p }; h += `<div style="margin-top:10px;color:#15803d">التعديل تحسّن على بيانات ما اختير عليها (اختيار الأفضل من ${g.length} توليفة يضخّم النتيجة، فاعتبرها مبدئية).</div><button class="btn-primary" style="width:100%;margin-top:8px" onclick="applyP()">✅ أوافق وأطبّق التعديل</button>`; }
+            const te = runSet(Ds, best.p, 'test', cost, strat), cur = runSet(Ds, P, 'test', cost, strat);
+            h += `<div class="results-title" style="margin-top:14px">أفضل توليفة من ${g.length} (اختيرت من أول ثلثين، واختُبرت على آخر ثلث)</div><div style="font-size:14px;line-height:1.9">${fmtP(best.p)}<br>تدريب: ${fmt(best.tr)}<br><b>اختبار خارج العينة: ${fmt(te)}</b><br>${brk(te, dirK)}<br>الإعداد الحالي على نفس الفترة: ${fmt(cur)}</div>`;
+            if (te.n >= 15 && te.exp > 0 && te.exp > cur.exp) { pendingP = { strat, p: best.p }; h += `<div style="margin-top:10px;color:#15803d">التعديل تحسّن على بيانات ما اختير عليها (اختيار الأفضل من ${g.length} توليفة يضخّم النتيجة، فاعتبرها مبدئية).</div><button class="btn-primary" style="width:100%;margin-top:8px" onclick="applyP()">✅ أوافق وأطبّق التعديل</button>`; }
             else h += `<div style="margin-top:10px;color:#b45309">لا أنصح بتعديل: التحسن ما ثبت على آخر ثلث${te.exp <= 0 ? '، والنتيجة خارج العينة غير رابحة' : ''}.</div>`;
             btLog(h);
         }
         async function btCompareAll() {
             const { months, cost } = btInputs(); btProg(5, 'تحميل البيانات...'); const Ds = await loadAll(months);
             if (!Ds.length) { btProg(100, ''); return btLog('لا توجد بيانات محفوظة. اضغط "تحميل البيانات" أولاً.'); }
-            const fp = { sl: 2, tp: 2, rsiLo: 45, rsiHi: 65, vol: 1.2, dev: 1 }, keys = Object.keys(STRATS), rows = []; let k = 0;
-            for (const st of keys) for (const d of [1, -1]) { btProg(5 + k / (keys.length * 2) * 90, `${STRAT_NAMES[st]} (${d > 0 ? 'شراء' : 'بيع'})...`); await wait(0); rows.push({ st, d, s: runSet(Ds, fp, 'all', cost, st, d) }); k++; }
-            rows.sort((a, b) => b.s.exp - a.s.exp); btProg(100, ''); const L = limits(cost);
-            btLog(`<div class="results-title">مقارنة ${rows.length} إعداد (${months} شهر · ${fmtP(fp)})</div>` + rows.map(r => `<div style="font-size:14px;line-height:1.9;margin-top:8px"><b>${STRAT_NAMES[r.st]} — ${r.d > 0 ? 'شراء' : 'بيع'}</b><br>${fmt(r.s)}</div>`).join('') + `<div style="margin-top:10px;color:#666;font-size:13px">إعدادات موحّدة للمقارنة فقط. الصفقة تُقبل لو وقفها بين ${L.min.toFixed(2)}% و${L.maxSl}% وهدفها حتى ${L.maxTp}%.</div>`);
+            const fp = { sl: 2, tp: 2, rsiLo: 45, rsiHi: 65, vol: 1.2, dev: 1 }, ks = [...Object.keys(STRATS), 'all'], rows = [];
+            for (let k = 0; k < ks.length; k++) { btProg(5 + k / ks.length * 90, `${STRAT_NAMES[ks[k]]}...`); await wait(0); rows.push({ st: ks[k], r: runSet(Ds, fp, 'all', cost, ks[k]) }); }
+            rows.sort((a, b) => b.r.exp - a.r.exp); btProg(100, ''); const L = limits(cost);
+            btLog(`<div class="results-title">مقارنة الاستراتيجيات (شراء وبيع معاً · ${months} شهر · ${fmtP(fp)})</div>` + rows.map(x => `<div style="font-size:14px;line-height:1.9;margin-top:8px"><b>${x.st === 'all' ? '⭐ ' : ''}${STRAT_NAMES[x.st]}</b><br>${fmt(x.r)}<br><span style="color:#666">${brk(x.r, dirK)}</span></div>`).join('') + `<div style="margin-top:10px;color:#666;font-size:13px">إعدادات موحّدة للمقارنة فقط. الصفقة تُقبل لو وقفها بين ${L.min.toFixed(2)}% و${L.maxSl}% وهدفها حتى ${L.maxTp}%. "الكل معاً" صفقة واحدة مفتوحة لكل سهم، ولو تعارض شراء وبيع على نفس الشمعة لا تُفتح صفقة.</div>`);
         }
+
 
 
         function applyP() {
             if (!pendingP) return;
-            P = pendingP.p; liveStrat = pendingP.strat; liveDir = pendingP.dir;
-            localStorage.setItem('strategyP', JSON.stringify(P)); localStorage.setItem('liveStrat', liveStrat); localStorage.setItem('liveDir', liveDir);
-            pendingP = null; const t = STRAT_NAMES[liveStrat] + ' — ' + (liveDir > 0 ? 'شراء' : 'بيع');
-            alert('✅ تم الحفظ. فعّل التوصيات الحية من الإعدادات إذا تبيها.'); btLog('تم الحفظ: ' + t + ' — ' + fmtP(P));
+            P = pendingP.p; liveStrat = pendingP.strat;
+            localStorage.setItem('strategyP', JSON.stringify(P)); localStorage.setItem('liveStrat', liveStrat);
+            pendingP = null; alert('✅ تم الحفظ. فعّل التوصيات الحية من الإعدادات إذا تبيها.'); btLog('تم الحفظ: ' + STRAT_NAMES[liveStrat] + ' — ' + fmtP(P));
         }
 
         // ===== شموع التوصيات الحية (تحديث كل دقيقتين لكل سهم) =====
