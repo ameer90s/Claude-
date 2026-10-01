@@ -943,6 +943,13 @@
                 <button class="btn-primary" style="width:100%;margin-top:10px;background:#764ba2" onclick="btCompareAll()">📊 قارن الاستراتيجيات الست</button>
                 <button class="btn-primary" style="width:100%;margin-top:10px;background:#16a34a" onclick="btOptimize()">🏆 ابحث عن أفضل نظام</button>
             </div>
+            <div class="settings-section" style="margin-top:14px">
+                <div class="settings-title">🧊 اختبار الفرضية المجمّدة</div>
+                <div style="font-size:13px;line-height:1.8;color:#555">استراتيجيتان بأرقام مثبتة مسبقاً تُختبران على ROKU وAFRM وHOOD وENPH (أسهم ما استُخدمت بالبحث). تُشغَّل مرة واحدة وتُحفظ النتيجة.<br>النجاح (لكل استراتيجية): 60 صفقة على الأقل · متوسط ≥ +0.10R بعد التكلفة · موجب على 3 أسهم من 4.</div>
+                <button class="btn-primary" style="width:100%;margin-top:10px" onclick="btDownload(FROZEN_SYMS)">⬇️ تحميل أسهم الاختبار</button>
+                <button class="btn-primary" style="width:100%;margin-top:10px;background:#0ea5e9" onclick="frozenRun()">🧊 شغّل الاختبار (مرة واحدة)</button>
+                <div id="frozenOut" class="results-log" style="margin-top:10px"></div>
+            </div>
             <div id="btProgWrap" style="display:none;margin-bottom:14px">
                 <div style="height:10px;background:#e0e0e0;border-radius:5px;overflow:hidden">
                     <div id="btProgBar" style="height:100%;width:0%;background:linear-gradient(90deg,#667eea,#764ba2);transition:width .15s"></div>
@@ -1897,10 +1904,10 @@
             throw new Error('429');
         }
 
-        async function btDownload() {
+        async function btDownload(list) {
             if (!config.tdKey) return btLog('أضف مفتاح Twelve Data من الإعدادات أولاً');
             const cut = new Date(Date.now() - 730 * 864e5).toISOString().slice(0, 10);
-            for (const s of config.symbols) {
+            for (const s of (list || config.symbols)) {
                 const rows = new Map(); let end = null;
                 try {
                     for (;;) {
@@ -2042,6 +2049,76 @@
         function checkExpiry() { const p = pinnedRecommendation; if (p && (p.day !== nyDay() || getNYParts().mins >= 955)) recordResult('timeout'); }
         try { const pr = JSON.parse(localStorage.getItem('pinnedRec')); if (pr && !pinnedRecommendation) { pinnedRecommendation = pr; displayRecommendation(); } } catch (e) {}
         setInterval(checkExpiry, 30000); checkExpiry();
+    
+        // ===== الفرضية المجمّدة: أرقام ثابتة لا تُعدَّل بعد رؤية النتائج =====
+        const FROZEN_SYMS = ['ROKU', 'AFRM', 'HOOD', 'ENPH'];
+        const FROZEN = { gapGo: { name: 'Gap & Go (شراء)', exit: '11:30' }, vwapPb: { name: 'ارتداد VWAP مع الاتجاه (شراء)', exit: '13:30' },
+                         minGap: 2, minRv: 2, maxStopPct: 1, tp: 2, minTrades: 60, minExp: 0.10, minSyms: 3 };
+        // فجوة ≥2% وحجم أول 15 دقيقة ≥2× متوسط نفس الفترة لآخر 20 يوم (حد أدنى 5 أيام)، وقمة/قاع أول 15 دقيقة
+        function prepFrozen(D) {
+            const n = D.c.length; D.gv = Array(n).fill(0); D.f15H = Array(n).fill(0); D.f15L = Array(n).fill(0); const hist = []; let i = 0;
+            while (i < n) {
+                let j = i; while (j < n && D.d[j] === D.d[i]) j++;
+                if (j - i >= 4 && D.hm[i] <= '09:35') {
+                    const sum = D.c[i].v + D.c[i + 1].v + D.c[i + 2].v, hi = Math.max(D.c[i].h, D.c[i + 1].h, D.c[i + 2].h), lo = Math.min(D.c[i].l, D.c[i + 1].l, D.c[i + 2].l);
+                    const h = hist.slice(-20), avg = h.length >= 5 ? h.reduce((a, b) => a + b, 0) / h.length : 0, rv = avg ? sum / avg : 0;
+                    for (let k = i + 2; k < j; k++) { D.gv[k] = rv; D.f15H[k] = hi; D.f15L[k] = lo; }
+                    hist.push(sum);
+                }
+                i = j;
+            }
+            return D;
+        }
+        function frozenSignal(D, i, k) {
+            if (i < 8 || !D.prevClose[i] || !D.gv[i]) return null;
+            const hm = D.hm[i], gap = (D.dOpen[i] - D.prevClose[i]) / D.prevClose[i] * 100;
+            if (gap < FROZEN.minGap || D.gv[i] < FROZEN.minRv) return null;
+            const x = D.c[i];
+            if (k === 'gapGo') {
+                if (hm < '09:45' || hm > '10:30') return null;
+                return x.c > D.f15H[i] && D.c[i - 1].c <= D.f15H[i] ? { stop: D.f15L[i] } : null;
+            }
+            if (hm < '10:30' || hm > '12:30' || !(x.c > D.dOpen[i] && x.c > D.vwap[i] && x.c > x.o)) return null;
+            let pb = false, lo = Infinity;
+            for (let j = i - 5; j <= i; j++) { lo = Math.min(lo, D.c[j].l); if (j < i && D.c[j].l <= D.vwap[j]) pb = true; }
+            return pb ? { stop: lo } : null;
+        }
+        function simFrozen(D, k, cost) {
+            const c = D.c, out = []; let i = 8;
+            while (i < c.length - 1) {
+                const g = frozenSignal(D, i, k); if (!g) { i++; continue; }
+                const e = c[i + 1].o, r = e - g.stop; if (!(r > 0) || r / e * 100 > FROZEN.maxStopPct) { i++; continue; }
+                const tp = e + r * FROZEN.tp, day = D.d[i + 1]; let res = null, j = i + 1;
+                for (; j < c.length; j++) {
+                    if (D.d[j] !== day) { res = (c[j - 1].c - e) / r; j--; break; }
+                    if (c[j].l <= g.stop) { res = -1; break; }
+                    if (c[j].h >= tp) { res = FROZEN.tp; break; }
+                    if (D.hm[j] >= FROZEN[k].exit) { res = (c[j].c - e) / r; break; }
+                }
+                if (res === null) break;
+                out.push({ t: c[i + 1].t, r: res - cost * e / r }); i = j + 1;
+            }
+            return out;
+        }
+        async function frozenRun() {
+            const out = $('frozenOut'), saved = localStorage.getItem('frozenResult');
+            if (saved) { out.innerHTML = saved + '<div style="color:#b45309;margin-top:8px">هذي النتيجة المحفوظة. الاختبار يُشغَّل مرة واحدة فقط.</div>'; return; }
+            const Ds = {}, miss = [];
+            for (const s of FROZEN_SYMS) { const D = await loadD(s, 24); if (D) Ds[s] = prepFrozen(D); else miss.push(s); }
+            if (miss.length) return out.innerHTML = 'ما في بيانات محفوظة لـ: ' + miss.join('، ') + '. اضغط "تحميل أسهم الاختبار" أولاً (لم يُشغَّل الاختبار).';
+            if (!confirm('الاختبار يُشغَّل مرة واحدة فقط وتُحفظ نتيجته. متأكد؟')) return;
+            const cost = (config.cost ?? 0.1) / 100, days = new Set(); Object.values(Ds).forEach(D => D.d.forEach(d => days.add(d)));
+            let h = `<div class="results-title">🧊 نتيجة الفرضية المجمّدة (24 شهر · تكلفة ${(cost * 100).toFixed(2)}%)</div>`;
+            for (const k of ['gapGo', 'vwapPb']) {
+                const per = FROZEN_SYMS.map(s => ({ s, t: simFrozen(Ds[s], k, cost) })), all = per.flatMap(x => x.t).sort((a, b) => a.t < b.t ? -1 : 1), st = stats(all, days.size);
+                const pos = per.filter(x => x.t.length && x.t.reduce((a, b) => a + b.r, 0) > 0).length;
+                const sens = [0.0005, 0.0015].map(cc => { const a = FROZEN_SYMS.flatMap(s => simFrozen(Ds[s], k, cc)); return a.length ? (a.reduce((x, y) => x + y.r, 0) / a.length).toFixed(2) + 'R' : '—'; });
+                const v = st.n < FROZEN.minTrades ? ['غير حاسم: أقل من 60 صفقة', '#b45309'] : st.exp >= FROZEN.minExp && pos >= FROZEN.minSyms ? ['اجتاز المعيار', '#15803d'] : ['ما اجتاز المعيار', '#b91c1c'];
+                h += `<div style="font-size:14px;line-height:1.9;margin-top:10px"><b>${FROZEN[k].name}</b><br>${fmt(st)}<br>${per.map(x => `${x.s}: ${x.t.length} · ${x.t.length ? (x.t.reduce((a, b) => a + b.r, 0) / x.t.length).toFixed(2) : '0.00'}R`).join(' | ')}<br>موجب على ${pos} من 4 · بتكلفة 0.05%: ${sens[0]} · 0.15%: ${sens[1]}<br><b style="color:${v[1]}">${v[0]}</b></div>`;
+            }
+            h += `<div style="margin-top:10px;font-size:13px;color:#666">لا نعدّل الأرقام بعد هالنتيجة. الخطوة التالية: تتبّع ورقي لأسابيع على بيانات جديدة.</div>`;
+            localStorage.setItem('frozenResult', h); out.innerHTML = h;
+        }
     </script>
 </body>
 </html>
