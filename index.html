@@ -852,6 +852,7 @@
             <button class="tab-button" data-tab="recommendations">💡 التوصيات</button>
             <button class="tab-button" data-tab="statistics">📈 الإحصائيات</button>
             <button class="tab-button" data-tab="backtest">🧪 الباك تست</button>
+            <button class="tab-button" data-tab="scanner">🔭 الماسح</button>
             <button class="tab-button" data-tab="settings">⚙️ الإعدادات</button>
         </div>
 
@@ -959,6 +960,11 @@
             <div id="btOut" class="results-log"></div>
         </div>
 
+        <div id="scanner" class="tab-content">
+            <h2>الماسح الآلي</h2>
+            <div id="scanOut" class="results-log">لم يبدأ المسح بعد. يشتغل أثناء الجلسة (9:45–13:30 نيويورك) ويحتاج مفتاحَي Finnhub وTwelve Data.</div>
+        </div>
+
         <!-- Tab 4: Settings -->
         <div id="settings" class="tab-content">
             <div class="settings-section">
@@ -970,6 +976,8 @@
                 <button class="btn-primary" onclick="saveFinnhubKey()">💾 حفظ المفتاح</button>
             </div>
 
+            <div class="settings-section"><div class="settings-title">🔭 الماسح الآلي</div>
+                <div class="toggle-switch"><span>تفعيل (أسهم من $3 إلى $200)</span><label class="switch"><input type="checkbox" id="scanToggle" checked onchange="config.scanOn=this.checked;localStorage.setItem('tradingAppSettings',JSON.stringify(config))"><span class="slider"></span></label></div></div>
             <div class="settings-section"><div class="settings-title">🎯 التوصيات الحية</div>
                 <div class="toggle-switch"><span>تفعيل (متوقفة حتى تثبت الباك تست)</span><label class="switch"><input type="checkbox" id="liveToggle" onchange="config.liveRecs=this.checked;localStorage.setItem('tradingAppSettings',JSON.stringify(config))"><span class="slider"></span></label></div></div>
             <div class="settings-section">
@@ -1375,7 +1383,7 @@
                     : `${(q.volume/1000000).toFixed(1)}M`;
 
                 const sourceTag = q.isReal
-                    ? '<span style="font-size:13px; color:#22c55e; font-weight:bold;">🟢 Finnhub</span>'
+                    ? '<span style="font-size:13px; color:#22c55e; font-weight:bold;">🟢 Finnhub' + ageTag(q) + '</span>'
                     : '<span style="font-size:13px; color:#999;">⚪ محاكاة</span>';
 
                 const chg = q.day ? ` ${q.day.changePct >= 0 ? '+' : ''}${q.day.changePct.toFixed(2)}%` : '';
@@ -1565,7 +1573,7 @@
                 <div class="recommendation-card rec-pinned">
                     <div class="rec-title">
                         🎯 توصية ${dir < 0 ? 'بيع' : 'شراء'} - ${symbol}
-                        <span class="confluence-badge">Confluence: ${confluence}/5</span>
+                        <span class="confluence-badge">${pinnedRecommendation.scan ? '⚠ غير مثبتة' : 'Confluence: ' + confluence + '/5'}</span>
                     </div>
                     <div style="margin-bottom: 15px; line-height: 2;">${reasonsHtml}</div>
                     <div class="rec-grid">
@@ -2035,6 +2043,7 @@
             const c = liveCache[s]; if (c && Date.now() - c.at < 120000) return c.D;
             const d = await (await fetch(tdUrl(s, 130).replace('order=desc', 'order=asc'), { cache: 'no-store' })).json();
             if (!d.values || d.values.length < 80) return null;
+            d.values.sort((a, b) => a.datetime < b.datetime ? -1 : 1);
             const D = prep(d.values.map(v => ({ t: v.datetime, o: +v.open, h: +v.high, l: +v.low, c: +v.close, v: +v.volume })));
             liveCache[s] = { at: Date.now(), D }; return D;
         }
@@ -2044,9 +2053,9 @@
             localStorage.setItem('tradingAppSettings', JSON.stringify(config));
             alert('✅ تم حفظ مفتاح Twelve Data على هذا الجهاز');
         }
-        window.addEventListener('DOMContentLoaded', () => { $('tdKey').value = config.tdKey || ''; $('liveToggle').checked = !!config.liveRecs; $('btCost').value = config.cost ?? 0.1; $('btMaxSl').value = config.maxStopPct || 1; $('btMaxTp').value = config.maxTargetPct || 2; });
+        window.addEventListener('DOMContentLoaded', () => { $('tdKey').value = config.tdKey || ''; $('liveToggle').checked = !!config.liveRecs; $('scanToggle').checked = config.scanOn !== false; $('btCost').value = config.cost ?? 0.1; $('btMaxSl').value = config.maxStopPct || 1; $('btMaxTp').value = config.maxTargetPct || 2; });
     
-        function checkExpiry() { const p = pinnedRecommendation; if (p && (p.day !== nyDay() || getNYParts().mins >= 955)) recordResult('timeout'); }
+        function checkExpiry() { const p = pinnedRecommendation; if (!p) return; const em = p.exp ? +p.exp.slice(0, 2) * 60 + +p.exp.slice(3, 5) : 955; if (p.day !== nyDay() || getNYParts().mins >= Math.min(955, em)) recordResult('timeout'); }
         try { const pr = JSON.parse(localStorage.getItem('pinnedRec')); if (pr && !pinnedRecommendation) { pinnedRecommendation = pr; displayRecommendation(); } } catch (e) {}
         setInterval(checkExpiry, 30000); checkExpiry();
     
@@ -2118,6 +2127,73 @@
             }
             h += `<div style="margin-top:10px;font-size:13px;color:#666">لا نعدّل الأرقام بعد هالنتيجة. الخطوة التالية: تتبّع ورقي لأسابيع على بيانات جديدة.</div>`;
             localStorage.setItem('frozenResult', h); out.innerHTML = h;
+        }
+    
+        // ===== تحديث آخر اليوم: نمسح الأسعار والذاكرة المؤقتة وعدّادات اليوم =====
+        function dailyReset() {
+            simulators = {}; latestQuotes = {};
+            for (const o of [liveCache, finnhubFetchTimes, lastRecTime, scanRecDay]) Object.keys(o).forEach(x => delete o[x]);
+            dailyTradesCount = 0; consecutiveLosses = 0; updateStockPrices();
+        }
+        function checkNewDay() { const st = nyDay() + (getNYParts().mins >= 965 ? 'E' : ''); if (st !== localStorage.getItem('dayStamp')) { dailyReset(); localStorage.setItem('dayStamp', st); } }
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) { checkNewDay(); updateStockPrices(); } });
+        setInterval(checkNewDay, 60000); checkNewDay();
+
+        // ===== الماسح الآلي =====
+        // مجموعة أسهم سائلة ومتحركة (الفلتر الحقيقي بالسعر الحي: $3–$200). مفاتيح المجاني ما تكفي لمسح كل السوق.
+        const SCAN_UNIVERSE = 'AMD,INTC,MU,SMCI,PLTR,SOFI,SNAP,PINS,RBLX,U,DKNG,HOOD,AFRM,UPST,COIN,MARA,RIOT,CLSK,IREN,CIFR,HUT,RGTI,QBTS,IONQ,QUBT,OKLO,SMR,NNE,CCJ,UUUU,LEU,ENPH,SEDG,RUN,FSLR,PLUG,FCEL,BE,JOBY,ACHR,RKLB,ASTS,LUNR,AMC,GME,HIMS,ROKU,SHOP,PYPL,F,GM,RIVN,LCID,NIO,XPEV,LI,BABA,JD,PDD,SOUN,BBAI,APLD,NBIS,NU,PATH,AI,S,DOCN,FUBO,OPEN,CHPT,LAZR,UAL,AAL,DAL,CCL,NCLH,T,VZ,PFE,BAC,WFC,C,KGC,HL,AG,PAAS,FCX,CLF,AA,OXY,DVN,SLB,HAL,MRNA,NVAX,TLRY,CGC,WBD,PARA,CVNA,ETSY,CHWY,W,LYFT,UBER,DASH,TWLO,PTON,SPCE,BB,NOK,ERIC,TLN,VST,GEV'.split(',');
+        let scanBusy = false; const scanRecDay = {}; const scanState = { at: 0, n: 0, rows: [], msg: '' };
+        function renderScan() {
+            const t = scanState.at ? new Date(scanState.at).toLocaleTimeString('ar-AE') : '-';
+            $('scanOut').innerHTML = `<div style="font-size:14px;line-height:1.9"><b>${scanState.msg}</b><br>آخر مسح: ${t} · فُحص ${scanState.n} سهم</div>` +
+                scanState.rows.map(r => `<div class="result-item ${r.flag ? 'profit' : ''}" style="margin-top:6px"><div><b>${r.s}</b> $${r.c.toFixed(2)}</div><span class="result-time">فجوة ${r.gap >= 0 ? '+' : ''}${r.gap.toFixed(1)}% · اليوم ${r.chg >= 0 ? '+' : ''}${r.chg.toFixed(1)}%${r.note ? ' · ' + r.note : ''}</span></div>`).join('');
+        }
+        async function scanCycle() {
+            if (scanBusy || config.scanOn === false || !config.finnhubKey || !config.tdKey || !isUSMarketOpen()) return;
+            const m = getNYParts().mins; if (m < 585 || m > 810) return;
+            scanBusy = true;
+            try {
+                const rows = []; let n = 0;
+                for (const sym of SCAN_UNIVERSE) {
+                    scanState.msg = `⏳ جاري المسح ${n}/${SCAN_UNIVERSE.length}...`; if (n % 10 === 0) renderScan();
+                    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${encodeURIComponent(config.finnhubKey)}`);
+                    if (res.status === 429) { await wait(30000); continue; }
+                    const q = await res.json(); n++;
+                    if (q && q.c >= 3 && q.c <= 200 && q.pc > 0 && q.o > 0 && q.t && Date.now() / 1000 - q.t < 900) rows.push({ s: sym, c: q.c, gap: (q.o - q.pc) / q.pc * 100, chg: (q.c - q.pc) / q.pc * 100 });
+                    await wait(1100);
+                }
+                rows.sort((a, b) => b.gap - a.gap);
+                const cand = rows.filter(r => r.gap >= FROZEN.minGap).slice(0, 8); scanState.n = n; scanState.at = Date.now();
+                scanState.rows = rows.slice(0, 12); scanState.msg = `🔭 مرشحون (فجوة ≥ ${FROZEN.minGap}%): ${cand.length}`; renderScan();
+                for (const r of cand) {
+                    if (pinnedRecommendation || scanRecDay[r.s] === nyDay() || dailyTradesCount >= SCALP.maxDailyTrades || consecutiveLosses >= SCALP.maxConsecutiveLosses) continue;
+                    const d = await (await fetch(tdUrl(r.s, 500).replace('order=desc', 'order=asc'), { cache: 'no-store' })).json(); await wait(7500);
+                    if (!d.values || d.values.length < 120) { r.note = 'لا شموع'; continue; }
+                    d.values.sort((a, b) => a.datetime < b.datetime ? -1 : 1);
+                    const lv = d.values[d.values.length - 1], lm = +lv.datetime.slice(11, 13) * 60 + +lv.datetime.slice(14, 16);
+                    if (lv.datetime.slice(0, 10) !== nyDay() || getNYParts().mins - lm > 15) { r.note = 'شموع متأخرة'; continue; }
+                    if (Math.abs(+lv.close - r.c) / r.c > 0.015) { r.note = 'فرق سعر الشموع'; continue; }
+                    const D = prepFrozen(prep(d.values.map(v => ({ t: v.datetime, o: +v.open, h: +v.high, l: +v.low, c: +v.close, v: +v.volume })))), i = D.c.length - 2;
+                    for (const k of ['gapGo', 'vwapPb']) {
+                        const g = frozenSignal(D, i, k); if (!g) continue;
+                        const q2 = await (await fetch(`https://finnhub.io/api/v1/quote?symbol=${r.s}&token=${encodeURIComponent(config.finnhubKey)}`)).json(), e = q2 && q2.c > 0 ? q2.c : r.c, rr = e - g.stop; if (!(rr > 0) || rr / e * 100 > FROZEN.maxStopPct) { r.note = 'وقف أبعد من 1%'; continue; }
+                        pinnedRecommendation = { symbol: r.s, dir: 1, scan: true, entry: e.toFixed(2), tp1: (e + rr).toFixed(2), tp2: (e + rr * FROZEN.tp).toFixed(2), sl: g.stop.toFixed(2), rr: '2.00', confluence: 5,
+                            reasons: [FROZEN[k].name, 'فجوة +' + r.gap.toFixed(1) + '%', 'حجم أول 15د ×' + D.gv[i].toFixed(1), 'وقف ' + (rr / e * 100).toFixed(2) + '%'], day: nyDay(), exp: FROZEN[k].exit };
+                        localStorage.setItem('pinnedRec', JSON.stringify(pinnedRecommendation)); scanRecDay[r.s] = nyDay(); r.flag = true; r.note = 'توصية ' + FROZEN[k].name;
+                        displayRecommendation(); if (config.soundEnabled) playSound(); break;
+                    }
+                }
+                scanState.rows = rows.slice(0, 12); renderScan();
+            } catch (e) { scanState.msg = 'خطأ في المسح: ' + e.message; renderScan(); }
+            scanBusy = false;
+        }
+        (async function scanLoop() { for (;;) { try { await scanCycle(); } catch (e) {} await wait(60000); } })();
+    
+        // عمر آخر صفقة على الكرت: ⚠ لو الجلسة مفتوحة والسعر أقدم من 10 دقائق
+        function ageTag(q) {
+            if (!q.day || !q.day.t) return ''; const m = Math.round((Date.now() / 1000 - q.day.t) / 60);
+            if (!isUSMarketOpen()) return ' · آخر تداول قبل ' + (m >= 120 ? Math.round(m / 60) + 'س' : m + 'د');
+            return m > 10 ? ' · ⚠ متأخر ' + m + 'د' : ' · ' + m + 'د';
         }
     </script>
 </body>
