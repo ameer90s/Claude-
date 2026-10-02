@@ -1,4 +1,4 @@
-const CACHE_NAME = 'scalping-v1';
+const CACHE_NAME = 'scalping-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -45,6 +45,11 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   // لا نتعامل مع POST requests
   if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // لا نخزّن ولا نخدم أسعار/شموع من الكاش: طلبات Finnhub وTwelve Data تروح للشبكة دائماً
+  if (new URL(event.request.url).origin !== self.location.origin) {
     return;
   }
 

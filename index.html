@@ -1231,8 +1231,7 @@
             finnhubFetchTimes[symbol] = now;
 
             try {
-                const response = await fetch(
-                    `https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(config.finnhubKey)}`
+                await fhGate(); const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(symbol)}&token=${encodeURIComponent(config.finnhubKey)}`
                 );
 
                 if (!response.ok) {
@@ -2145,37 +2144,37 @@
         let scanBusy = false; const scanRecDay = {}; const scanState = { at: 0, n: 0, rows: [], msg: '' };
         function renderScan() {
             const t = scanState.at ? new Date(scanState.at).toLocaleTimeString('ar-AE') : '-';
-            $('scanOut').innerHTML = `<div style="font-size:14px;line-height:1.9"><b>${scanState.msg}</b><br>آخر مسح: ${t} · فُحص ${scanState.n} سهم</div>` +
+            $('scanOut').innerHTML = `<div style="font-size:14px;line-height:1.9"><b>${scanState.msg}</b><br>آخر مسح: ${t} · فُحص ${scanState.n} سهم${scanState.dur ? ' · ' + scanState.dur + 'ث' : ''}${scanState.diag ? '<br>تشخيص: سعر/حداثة ' + scanState.diag.ok + ' · فجوة≥2%: ' + scanState.diag.gap + ' · شموع غير متوفرة: ' + scanState.diag.nocandle + ' · شموع متأخرة: ' + scanState.diag.late + ' · فرق سعر: ' + scanState.diag.diff + ' · حجم أول 15د < ×2: ' + scanState.diag.rv + ' · بلا إشارة: ' + scanState.diag.nosig + ' · وقف > 1%: ' + scanState.diag.far + ' · توصيات: ' + scanState.diag.rec : ''}</div>` +
                 scanState.rows.map(r => `<div class="result-item ${r.flag ? 'profit' : ''}" style="margin-top:6px"><div><b>${r.s}</b> $${r.c.toFixed(2)}</div><span class="result-time">فجوة ${r.gap >= 0 ? '+' : ''}${r.gap.toFixed(1)}% · اليوم ${r.chg >= 0 ? '+' : ''}${r.chg.toFixed(1)}%${r.note ? ' · ' + r.note : ''}</span></div>`).join('');
         }
         async function scanCycle() {
-            if (scanBusy || config.scanOn === false || !config.finnhubKey || !config.tdKey || !isUSMarketOpen()) return;
-            const m = getNYParts().mins; if (m < 585 || m > 810) return;
-            scanBusy = true;
+            if (scanBusy) return;
+            const mn = getNYParts().mins, why = config.scanOn === false ? 'الماسح متوقف من الإعدادات' : !config.finnhubKey || !config.tdKey ? '⚠ أضف مفتاحَي Finnhub وTwelve Data من الإعدادات' : !isUSMarketOpen() ? 'السوق مغلق' : (mn < 585 || mn > 810) ? 'خارج نافذة المسح (9:45–13:30 نيويورك)' : '';
+            if (why) { scanState.msg = '⏸ ' + why; renderScan(); return; }
+            keepAwake(); scanBusy = true; const t0 = Date.now(), diag = { q: 0, ok: 0, gap: 0, cand: 0, nocandle: 0, late: 0, diff: 0, rv: 0, eval: 0, nosig: 0, far: 0, rec: 0 };
             try {
                 const rows = []; let n = 0;
                 for (const sym of SCAN_UNIVERSE) {
                     scanState.msg = `⏳ جاري المسح ${n}/${SCAN_UNIVERSE.length}...`; if (n % 10 === 0) renderScan();
-                    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${encodeURIComponent(config.finnhubKey)}`);
+                    await fhGate(); const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${encodeURIComponent(config.finnhubKey)}`);
                     if (res.status === 429) { await wait(30000); continue; }
                     const q = await res.json(); n++;
-                    if (q && q.c >= 3 && q.c <= 200 && q.pc > 0 && q.o > 0 && q.t && Date.now() / 1000 - q.t < 900) rows.push({ s: sym, c: q.c, gap: (q.o - q.pc) / q.pc * 100, chg: (q.c - q.pc) / q.pc * 100 });
-                    await wait(1100);
+                    diag.q++; if (q && q.c >= 3 && q.c <= 200 && q.pc > 0 && q.o > 0 && q.t && Date.now() / 1000 - q.t < 900) { diag.ok++; rows.push({ s: sym, c: q.c, gap: (q.o - q.pc) / q.pc * 100, chg: (q.c - q.pc) / q.pc * 100 }); }
                 }
                 rows.sort((a, b) => b.gap - a.gap);
-                const cand = rows.filter(r => r.gap >= FROZEN.minGap).slice(0, 8); scanState.n = n; scanState.at = Date.now();
+                diag.gap = rows.filter(r => r.gap >= FROZEN.minGap).length; const cand = rows.filter(r => r.gap >= FROZEN.minGap).slice(0, 8); diag.cand = cand.length; scanState.n = n; scanState.at = Date.now();
                 scanState.rows = rows.slice(0, 12); scanState.msg = `🔭 مرشحون (فجوة ≥ ${FROZEN.minGap}%): ${cand.length}`; renderScan();
                 for (const r of cand) {
                     if (pinnedRecommendation || scanRecDay[r.s] === nyDay() || dailyTradesCount >= SCALP.maxDailyTrades || consecutiveLosses >= SCALP.maxConsecutiveLosses) continue;
                     const d = await (await fetch(tdUrl(r.s, 500).replace('order=desc', 'order=asc'), { cache: 'no-store' })).json(); await wait(7500);
-                    if (!d.values || d.values.length < 120) { r.note = 'لا شموع'; continue; }
+                    if (!d.values || d.values.length < 120) { r.note = 'لا شموع'; diag.nocandle++; continue; }
                     d.values.sort((a, b) => a.datetime < b.datetime ? -1 : 1);
                     const lv = d.values[d.values.length - 1], lm = +lv.datetime.slice(11, 13) * 60 + +lv.datetime.slice(14, 16);
-                    if (lv.datetime.slice(0, 10) !== nyDay() || getNYParts().mins - lm > 15) { r.note = 'شموع متأخرة'; continue; }
-                    if (Math.abs(+lv.close - r.c) / r.c > 0.015) { r.note = 'فرق سعر الشموع'; continue; }
+                    if (lv.datetime.slice(0, 10) !== nyDay() || getNYParts().mins - lm > 15) { r.note = 'شموع متأخرة ' + (getNYParts().mins - lm) + 'د'; diag.late++; continue; }
+                    if (Math.abs(+lv.close - r.c) / r.c > 0.015) { r.note = 'فرق سعر الشموع'; diag.diff++; continue; }
                     const D = prepFrozen(prep(d.values.map(v => ({ t: v.datetime, o: +v.open, h: +v.high, l: +v.low, c: +v.close, v: +v.volume })))), i = D.c.length - 2;
-                    for (const k of ['gapGo', 'vwapPb']) {
-                        const g = frozenSignal(D, i, k); if (!g) continue;
+                    const rv = D.gv[i] || 0; if (rv < FROZEN.minRv) { r.note = 'حجم أول 15د ×' + rv.toFixed(1); diag.rv++; continue; }
+                    r.note = 'بلا إشارة'; diag.eval++; for (const k of ['gapGo', 'vwapPb']) { const g = frozenSignal(D, i, k); if (!g) continue;
                         const q2 = await (await fetch(`https://finnhub.io/api/v1/quote?symbol=${r.s}&token=${encodeURIComponent(config.finnhubKey)}`)).json(), e = q2 && q2.c > 0 ? q2.c : r.c, rr = e - g.stop; if (!(rr > 0) || rr / e * 100 > FROZEN.maxStopPct) { r.note = 'وقف أبعد من 1%'; continue; }
                         pinnedRecommendation = { symbol: r.s, dir: 1, scan: true, entry: e.toFixed(2), tp1: (e + rr).toFixed(2), tp2: (e + rr * FROZEN.tp).toFixed(2), sl: g.stop.toFixed(2), rr: '2.00', confluence: 5,
                             reasons: [FROZEN[k].name, 'فجوة +' + r.gap.toFixed(1) + '%', 'حجم أول 15د ×' + D.gv[i].toFixed(1), 'وقف ' + (rr / e * 100).toFixed(2) + '%'], day: nyDay(), exp: FROZEN[k].exit };
@@ -2183,7 +2182,8 @@
                         displayRecommendation(); if (config.soundEnabled) playSound(); break;
                     }
                 }
-                scanState.rows = rows.slice(0, 12); renderScan();
+                diag.far = cand.filter(r => r.note === 'وقف أبعد من 1%').length; diag.rec = cand.filter(r => r.flag).length; diag.nosig = cand.filter(r => r.note === 'بلا إشارة').length;
+                scanState.rows = rows.slice(0, 12); scanState.diag = diag; scanState.dur = Math.round((Date.now() - t0) / 1000); logScan(diag); renderScan();
             } catch (e) { scanState.msg = 'خطأ في المسح: ' + e.message; renderScan(); }
             scanBusy = false;
         }
@@ -2195,6 +2195,12 @@
             if (!isUSMarketOpen()) return ' · آخر تداول قبل ' + (m >= 120 ? Math.round(m / 60) + 'س' : m + 'د');
             return m > 10 ? ' · ⚠ متأخر ' + m + 'د' : ' · ' + m + 'د';
         }
+    
+        // مُنظِّم موحّد لطلبات Finnhub (60/دقيقة): الماسح وكروت الأسعار يتشاركون نفس الحد
+        var fhNext, wl;
+        async function fhGate() { const now = Date.now(), t = Math.max(now, fhNext || 0); fhNext = t + 1100; if (t > now) await wait(t - now); }
+        async function keepAwake() { try { if ('wakeLock' in navigator && !wl && !document.hidden) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } } catch (e) {} }
+        function logScan(d) { try { const L = JSON.parse(localStorage.getItem('scanLog') || '[]'); L.push({ t: new Date().toISOString().slice(0, 16), d }); localStorage.setItem('scanLog', JSON.stringify(L.slice(-40))); } catch (e) {} }
     </script>
 </body>
 </html>
