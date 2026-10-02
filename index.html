@@ -2136,7 +2136,7 @@
         }
         function checkNewDay() { const st = nyDay() + (getNYParts().mins >= 965 ? 'E' : ''); if (st !== localStorage.getItem('dayStamp')) { dailyReset(); localStorage.setItem('dayStamp', st); } }
         document.addEventListener('visibilitychange', () => { if (!document.hidden) { checkNewDay(); updateStockPrices(); } });
-        setInterval(checkNewDay, 60000); checkNewDay();
+        
 
         // ===== الماسح الآلي =====
         // مجموعة أسهم سائلة ومتحركة (الفلتر الحقيقي بالسعر الحي: $3–$200). مفاتيح المجاني ما تكفي لمسح كل السوق.
@@ -2201,6 +2201,9 @@
         async function fhGate() { const now = Date.now(), t = Math.max(now, fhNext || 0); fhNext = t + 1100; if (t > now) await wait(t - now); }
         async function keepAwake() { try { if ('wakeLock' in navigator && !wl && !document.hidden) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } } catch (e) {} }
         function logScan(d) { try { const L = JSON.parse(localStorage.getItem('scanLog') || '[]'); L.push({ t: new Date().toISOString().slice(0, 16), d }); localStorage.setItem('scanLog', JSON.stringify(L.slice(-40))); } catch (e) {} }
+    
+        // تُشغَّل في آخر السكربت بعد تعريف كل المتغيرات (قبل كذا كانت تسبب خطأ ReferenceError يوقف الماسح)
+        setInterval(checkNewDay, 60000); checkNewDay();
     </script>
 </body>
 </html>
