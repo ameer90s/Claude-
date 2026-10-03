@@ -826,6 +826,7 @@
         <!-- Header -->
         <div class="header">
             <h1>🚀 Scalping Assistant v1.0</h1>
+            <div id="verTag" style="font-size:11px;opacity:.85"></div>
             <div class="header-info">
                 <div class="clock-item">
                     <div class="clock-flag">🇦🇪</div>
@@ -851,7 +852,7 @@
             <button class="tab-button active" data-tab="stocks">📊 الأسعار والتفقد</button>
             <button class="tab-button" data-tab="recommendations">💡 التوصيات</button>
             <button class="tab-button" data-tab="statistics">📈 الإحصائيات</button>
-            <button class="tab-button" data-tab="backtest">🧪 الباك تست</button>
+            
             <button class="tab-button" data-tab="scanner">🔭 الماسح</button>
             <button class="tab-button" data-tab="settings">⚙️ الإعدادات</button>
         </div>
@@ -920,49 +921,12 @@
         </div>
 
         <!-- Tab: Backtest -->
-        <div id="backtest" class="tab-content">
-            <h2>الباك تست</h2>
-            <div class="settings-section">
-                <div class="form-group"><label class="form-label">الاستراتيجية</label>
-                    <select id="btStrat" class="form-input">
-                        <option value="trend">اتجاه + تراجع (الحالية)</option>
-                        <option value="orb">اختراق نطاق الافتتاح (ORB)</option>
-                        <option value="vwapRev">الارتداد نحو VWAP</option>
-                        <option value="sr">ارتداد الدعم/المقاومة (Pivots)</option>
-                        <option value="gap">فجوة الافتتاح (Gap & Go)</option>
-                        <option value="bb">اختراق تضيّق بولينجر</option>
-                        <option value="all">⭐ الكل معاً (النظام كامل)</option>
-                    </select></div>
-                <div class="form-group"><label class="form-label">المدة</label>
-                    <select id="btMonths" class="form-input"><option value="6">6 شهور</option><option value="9">9 شهور</option><option value="12" selected>12 شهر</option><option value="24">24 شهر</option></select></div>
-                <div class="form-group"><label class="form-label">تكلفة الصفقة % (سبريد + عمولة)</label>
-                    <input id="btCost" type="number" class="form-input" value="0.1" step="0.05" min="0"></div>
-                <div class="form-group"><label class="form-label">أقصى وقف %</label><input id="btMaxSl" type="number" class="form-input" value="1" step="0.1" min="0.1"></div>
-                <div class="form-group"><label class="form-label">أقصى هدف %</label><input id="btMaxTp" type="number" class="form-input" value="2" step="0.1" min="0.1"></div>
-                <button class="btn-primary" style="width:100%" onclick="btDownload()">⬇️ تحميل البيانات (مرة وحدة)</button>
-                <button class="btn-primary" style="width:100%;margin-top:10px" onclick="btRun()">▶️ شغّل الباك تست</button>
-                <button class="btn-primary" style="width:100%;margin-top:10px;background:#764ba2" onclick="btCompareAll()">📊 قارن الاستراتيجيات الست</button>
-                <button class="btn-primary" style="width:100%;margin-top:10px;background:#16a34a" onclick="btOptimize()">🏆 ابحث عن أفضل نظام</button>
-            </div>
-            <div class="settings-section" style="margin-top:14px">
-                <div class="settings-title">🧊 اختبار الفرضية المجمّدة</div>
-                <div style="font-size:13px;line-height:1.8;color:#555">استراتيجيتان بأرقام مثبتة مسبقاً تُختبران على ROKU وAFRM وHOOD وENPH (أسهم ما استُخدمت بالبحث). تُشغَّل مرة واحدة وتُحفظ النتيجة.<br>النجاح (لكل استراتيجية): 60 صفقة على الأقل · متوسط ≥ +0.10R بعد التكلفة · موجب على 3 أسهم من 4.</div>
-                <button class="btn-primary" style="width:100%;margin-top:10px" onclick="btDownload(FROZEN_SYMS)">⬇️ تحميل أسهم الاختبار</button>
-                <button class="btn-primary" style="width:100%;margin-top:10px;background:#0ea5e9" onclick="frozenRun()">🧊 شغّل الاختبار (مرة واحدة)</button>
-                <div id="frozenOut" class="results-log" style="margin-top:10px"></div>
-            </div>
-            <div id="btProgWrap" style="display:none;margin-bottom:14px">
-                <div style="height:10px;background:#e0e0e0;border-radius:5px;overflow:hidden">
-                    <div id="btProgBar" style="height:100%;width:0%;background:linear-gradient(90deg,#667eea,#764ba2);transition:width .15s"></div>
-                </div>
-                <div id="btProgText" style="text-align:center;font-size:13px;color:#666;margin-top:6px">...</div>
-            </div>
-            <div id="btOut" class="results-log"></div>
-        </div>
+        
 
         <div id="scanner" class="tab-content">
             <h2>الماسح الآلي</h2>
-            <div id="scanOut" class="results-log">لم يبدأ المسح بعد. يشتغل أثناء الجلسة (9:45–13:30 نيويورك) ويحتاج مفتاحَي Finnhub وTwelve Data.</div>
+            <div id="scanOut" class="results-log">لم يبدأ المسح بعد. يشتغل أثناء الجلسة (9:45–14:00 نيويورك) ويحتاج مفتاحَي Finnhub وTwelve Data.</div>
+            <button class="btn-primary" style="width:100%;margin-top:10px" onclick="askNotif()">🔔 تفعيل الإشعارات</button>
         </div>
 
         <!-- Tab 4: Settings -->
@@ -978,8 +942,6 @@
 
             <div class="settings-section"><div class="settings-title">🔭 الماسح الآلي</div>
                 <div class="toggle-switch"><span>تفعيل (أسهم من $3 إلى $200)</span><label class="switch"><input type="checkbox" id="scanToggle" checked onchange="config.scanOn=this.checked;localStorage.setItem('tradingAppSettings',JSON.stringify(config))"><span class="slider"></span></label></div></div>
-            <div class="settings-section"><div class="settings-title">🎯 التوصيات الحية</div>
-                <div class="toggle-switch"><span>تفعيل (متوقفة حتى تثبت الباك تست)</span><label class="switch"><input type="checkbox" id="liveToggle" onchange="config.liveRecs=this.checked;localStorage.setItem('tradingAppSettings',JSON.stringify(config))"><span class="slider"></span></label></div></div>
             <div class="settings-section">
                 <div class="settings-title">🕯️ مفتاح Twelve Data (الشموع)</div>
                 <div class="form-group"><input type="text" id="tdKey" class="form-input" placeholder="Twelve Data API key" style="direction:ltr"></div>
@@ -1031,6 +993,7 @@
             soundEnabled: true
         };
 
+        var APP_VERSION = '1.3 · 2026-10-03';
         let results = [];
         let consecutiveLosses = 0;
         let dailyTradesCount = 0;
@@ -1279,7 +1242,7 @@
             
             setInterval(updateClocks, 1000);
             setInterval(updateStockPrices, config.interval);
-            setInterval(generateRecommendation, config.interval);
+            
         });
 
         // Tabs
@@ -1627,16 +1590,16 @@
             oscillator.stop(audioContext.currentTime + 0.3);
         }
 
-        function recordResult(type) {
+        function recordResult(type, auto) {
             if (!pinnedRecommendation) return;
             
             const result = {
                 type: type,
-                symbol: pinnedRecommendation.symbol,
+                symbol: pinnedRecommendation.symbol + (auto ? ' (آلي)' : ''),
                 time: new Date().toLocaleTimeString('ar-AE')
             };
             
-            results.push(result);
+            results.push(result); localStorage.setItem('results', JSON.stringify(results)); logRec(type, auto);
             
             if (type === 'loss') {
                 consecutiveLosses++;
@@ -1686,7 +1649,7 @@
         }
 
         function clearResults() {
-            if (confirm('هل تريد حذف جميع النتائج؟')) {
+            if (confirm('هل تريد حذف جميع النتائج؟')) { localStorage.removeItem('results');
                 results = [];
                 consecutiveLosses = 0;
                 dailyTradesCount = 0;
@@ -2052,9 +2015,9 @@
             localStorage.setItem('tradingAppSettings', JSON.stringify(config));
             alert('✅ تم حفظ مفتاح Twelve Data على هذا الجهاز');
         }
-        window.addEventListener('DOMContentLoaded', () => { $('tdKey').value = config.tdKey || ''; $('liveToggle').checked = !!config.liveRecs; $('scanToggle').checked = config.scanOn !== false; $('btCost').value = config.cost ?? 0.1; $('btMaxSl').value = config.maxStopPct || 1; $('btMaxTp').value = config.maxTargetPct || 2; });
+        window.addEventListener('DOMContentLoaded', () => { $('tdKey').value = config.tdKey || ''; $('scanToggle').checked = config.scanOn !== false; });
     
-        function checkExpiry() { const p = pinnedRecommendation; if (!p) return; const em = p.exp ? +p.exp.slice(0, 2) * 60 + +p.exp.slice(3, 5) : 955; if (p.day !== nyDay() || getNYParts().mins >= Math.min(955, em)) recordResult('timeout'); }
+        function checkExpiry() { const p = pinnedRecommendation; if (!p) return; const em = p.exp ? +p.exp.slice(0, 2) * 60 + +p.exp.slice(3, 5) : 955; if (p.day !== nyDay() || getNYParts().mins >= Math.min(955, em)) recordResult('timeout', true); }
         try { const pr = JSON.parse(localStorage.getItem('pinnedRec')); if (pr && !pinnedRecommendation) { pinnedRecommendation = pr; displayRecommendation(); } } catch (e) {}
         setInterval(checkExpiry, 30000); checkExpiry();
     
@@ -2144,12 +2107,13 @@
         let scanBusy = false; const scanRecDay = {}; const scanState = { at: 0, n: 0, rows: [], msg: '' };
         function renderScan() {
             const t = scanState.at ? new Date(scanState.at).toLocaleTimeString('ar-AE') : '-';
-            $('scanOut').innerHTML = `<div style="font-size:14px;line-height:1.9"><b>${scanState.msg}</b><br>آخر مسح: ${t} · فُحص ${scanState.n} سهم${scanState.dur ? ' · ' + scanState.dur + 'ث' : ''}${scanState.diag ? '<br>تشخيص: سعر/حداثة ' + scanState.diag.ok + ' · فجوة≥2%: ' + scanState.diag.gap + ' · شموع غير متوفرة: ' + scanState.diag.nocandle + ' · شموع متأخرة: ' + scanState.diag.late + ' · فرق سعر: ' + scanState.diag.diff + ' · حجم أول 15د < ×2: ' + scanState.diag.rv + ' · بلا إشارة: ' + scanState.diag.nosig + ' · وقف > 1%: ' + scanState.diag.far + ' · توصيات: ' + scanState.diag.rec : ''}</div>` +
-                scanState.rows.map(r => `<div class="result-item ${r.flag ? 'profit' : ''}" style="margin-top:6px"><div><b>${r.s}</b> $${r.c.toFixed(2)}</div><span class="result-time">فجوة ${r.gap >= 0 ? '+' : ''}${r.gap.toFixed(1)}% · اليوم ${r.chg >= 0 ? '+' : ''}${r.chg.toFixed(1)}%${r.note ? ' · ' + r.note : ''}</span></div>`).join('');
+            $('scanOut').innerHTML = `<div style="font-size:13px;color:#666">نسخة ${APP_VERSION} · Finnhub ${config.finnhubKey ? '✅' : '❌'} · Twelve Data ${config.tdKey ? '✅' : '❌'} · إشعارات ${('Notification' in window && Notification.permission === 'granted') ? '✅' : '❌'}</div><div style="font-size:14px;line-height:1.9"><b>${scanState.msg}</b><br>آخر مسح: ${t} · فُحص ${scanState.n} سهم${scanState.dur ? ' · ' + scanState.dur + 'ث' : ''}${scanState.diag ? '<br>تشخيص: سعر/حداثة ' + scanState.diag.ok + ' · فجوة≥2%: ' + scanState.diag.gap + ' · شموع غير متوفرة: ' + scanState.diag.nocandle + ' · شموع متأخرة: ' + scanState.diag.late + ' · فرق سعر: ' + scanState.diag.diff + ' · حجم أول 15د < ×2: ' + scanState.diag.rv + ' · بلا إشارة: ' + scanState.diag.nosig + ' · وقف > 1%: ' + scanState.diag.far + ' · توصيات: ' + scanState.diag.rec : ''}</div>` +
+                scanState.rows.map(r => `<div class="result-item ${r.flag ? 'profit' : ''}" style="margin-top:6px"><div><b>${r.s}</b> $${r.c.toFixed(2)}</div><span class="result-time">فجوة ${r.gap >= 0 ? '+' : ''}${r.gap.toFixed(1)}% · اليوم ${r.chg >= 0 ? '+' : ''}${r.chg.toFixed(1)}%${r.note ? ' · ' + r.note : ''}${r.watch ? '<br>' + r.watch : ''}</span></div>`).join('');
         }
         async function scanCycle() {
             if (scanBusy) return;
-            const mn = getNYParts().mins, why = config.scanOn === false ? 'الماسح متوقف من الإعدادات' : !config.finnhubKey || !config.tdKey ? '⚠ أضف مفتاحَي Finnhub وTwelve Data من الإعدادات' : !isUSMarketOpen() ? 'السوق مغلق' : (mn < 585 || mn > 810) ? 'خارج نافذة المسح (9:45–13:30 نيويورك)' : '';
+            try { const st = JSON.parse(localStorage.getItem('tradingAppSettings') || '{}'); if (st.finnhubKey) config.finnhubKey = st.finnhubKey; if (st.tdKey) config.tdKey = st.tdKey; } catch (e) {}
+            const mn = getNYParts().mins, why = config.scanOn === false ? 'الماسح متوقف من الإعدادات' : !config.finnhubKey || !config.tdKey ? '⚠ ' + (!config.finnhubKey ? 'مفتاح Finnhub ناقص' : 'مفتاح Twelve Data ناقص') + ' (من الإعدادات)' : !isUSMarketOpen() ? 'السوق مغلق' : (mn < 585 || mn > 840) ? 'خارج نافذة المسح (9:45–14:00 نيويورك)' : '';
             if (why) { scanState.msg = '⏸ ' + why; renderScan(); return; }
             keepAwake(); scanBusy = true; const t0 = Date.now(), diag = { q: 0, ok: 0, gap: 0, cand: 0, nocandle: 0, late: 0, diff: 0, rv: 0, eval: 0, nosig: 0, far: 0, rec: 0 };
             try {
@@ -2174,12 +2138,13 @@
                     if (Math.abs(+lv.close - r.c) / r.c > 0.015) { r.note = 'فرق سعر الشموع'; diag.diff++; continue; }
                     const D = prepFrozen(prep(d.values.map(v => ({ t: v.datetime, o: +v.open, h: +v.high, l: +v.low, c: +v.close, v: +v.volume })))), i = D.c.length - 2;
                     const rv = D.gv[i] || 0; if (rv < FROZEN.minRv) { r.note = 'حجم أول 15د ×' + rv.toFixed(1); diag.rv++; continue; }
+                    r.watch = '👀 قمة أول 15د ' + ((D.f15H[i] - r.c) / r.c * 100).toFixed(1) + '% فوق السعر · VWAP ' + ((r.c - D.vwap[i]) / D.vwap[i] * 100).toFixed(1) + '% · حجم ×' + rv.toFixed(1);
                     r.note = 'بلا إشارة'; diag.eval++; for (const k of ['gapGo', 'vwapPb']) { const g = frozenSignal(D, i, k); if (!g) continue;
                         const q2 = await (await fetch(`https://finnhub.io/api/v1/quote?symbol=${r.s}&token=${encodeURIComponent(config.finnhubKey)}`)).json(), e = q2 && q2.c > 0 ? q2.c : r.c, rr = e - g.stop; if (!(rr > 0) || rr / e * 100 > FROZEN.maxStopPct) { r.note = 'وقف أبعد من 1%'; continue; }
                         pinnedRecommendation = { symbol: r.s, dir: 1, scan: true, entry: e.toFixed(2), tp1: (e + rr).toFixed(2), tp2: (e + rr * FROZEN.tp).toFixed(2), sl: g.stop.toFixed(2), rr: '2.00', confluence: 5,
                             reasons: [FROZEN[k].name, 'فجوة +' + r.gap.toFixed(1) + '%', 'حجم أول 15د ×' + D.gv[i].toFixed(1), 'وقف ' + (rr / e * 100).toFixed(2) + '%'], day: nyDay(), exp: FROZEN[k].exit };
                         localStorage.setItem('pinnedRec', JSON.stringify(pinnedRecommendation)); scanRecDay[r.s] = nyDay(); r.flag = true; r.note = 'توصية ' + FROZEN[k].name;
-                        displayRecommendation(); if (config.soundEnabled) playSound(); break;
+                        displayRecommendation(); if (config.soundEnabled) playSound(); notifyRec(pinnedRecommendation); break;
                     }
                 }
                 diag.far = cand.filter(r => r.note === 'وقف أبعد من 1%').length; diag.rec = cand.filter(r => r.flag).length; diag.nosig = cand.filter(r => r.note === 'بلا إشارة').length;
@@ -2204,6 +2169,29 @@
     
         // تُشغَّل في آخر السكربت بعد تعريف كل المتغيرات (قبل كذا كانت تسبب خطأ ReferenceError يوقف الماسح)
         setInterval(checkNewDay, 60000); checkNewDay();
+    
+        // ===== تتبع ورقي آلي: يراقب سعر التوصية المثبتة ويسجل النتيجة (تقريبي: يعتمد على سعر Finnhub كل 30 ثانية) =====
+        function logRec(type, auto) {
+            try { const p = pinnedRecommendation; if (!p) return; const L = JSON.parse(localStorage.getItem('recLog') || '[]');
+                L.push({ day: p.day, sym: p.symbol, strat: p.reasons && p.reasons[0], e: p.entry, sl: p.sl, tp: p.tp2, res: type, auto: !!auto, t: new Date().toISOString().slice(0, 16) });
+                localStorage.setItem('recLog', JSON.stringify(L.slice(-300))); } catch (e) {}
+        }
+        async function trackPinned() {
+            const p = pinnedRecommendation; if (!p || !p.scan || !config.finnhubKey || !isUSMarketOpen()) return;
+            await fhGate(); const q = await (await fetch(`https://finnhub.io/api/v1/quote?symbol=${p.symbol}&token=${encodeURIComponent(config.finnhubKey)}`)).json();
+            if (pinnedRecommendation !== p || !(q.c > 0)) return;
+            const d = p.dir || 1;
+            if (d * (q.c - +p.sl) <= 0) recordResult('loss', true); else if (d * (q.c - +p.tp2) >= 0) recordResult('profit', true);
+        }
+        setInterval(() => { trackPinned().catch(() => {}); }, 30000);
+        function askNotif() { if ('Notification' in window) Notification.requestPermission().then(p => { alert(p === 'granted' ? '✅ تم تفعيل الإشعارات' : 'لم يتم التفعيل'); renderScan(); }); }
+        function notifyRec(r) {
+            try { if (!('Notification' in window) || Notification.permission !== 'granted') return;
+                const t = '🎯 توصية ' + r.symbol, o = { body: `دخول ${r.entry} · هدف ${r.tp2} · وقف ${r.sl}`, vibrate: [200, 100, 200], tag: 'rec-' + r.symbol };
+                if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(g => g.showNotification(t, o)); else new Notification(t, o); } catch (e) {}
+        }
+        try { const rs = JSON.parse(localStorage.getItem('results') || '[]'); if (Array.isArray(rs) && !results.length) { rs.forEach(x => results.push(x)); updateStatistics(); } } catch (e) {}
+        document.getElementById('verTag').textContent = 'نسخة ' + APP_VERSION;
     </script>
 </body>
 </html>
