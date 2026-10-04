@@ -993,7 +993,7 @@
             soundEnabled: true
         };
 
-        var APP_VERSION = '1.3 · 2026-10-03';
+        var APP_VERSION = '1.4 · 2026-10-04';
         let results = [];
         let consecutiveLosses = 0;
         let dailyTradesCount = 0;
@@ -1560,6 +1560,11 @@
                             <div class="rec-value">1:${rr}</div>
                         </div>
                     </div>
+                    <div class="form-group" style="margin-top:12px">
+                        <label class="form-label">سبريد eToro وقت الدخول (سنت)</label>
+                        <input id="recSpread" type="number" min="0" step="1" inputmode="numeric" class="form-input" placeholder="مثلاً 8" value="${pinnedRecommendation.spread ?? ''}" oninput="onSpreadInput(this.value)">
+                        <div id="spreadWarn" style="font-size:13px;margin-top:6px;line-height:1.7"></div>
+                    </div>
                     <div class="rec-actions">
                         <button class="rec-btn btn-profit" onclick="recordResult('profit')">✅ صفقة رابحة</button>
                         <button class="rec-btn btn-loss" onclick="recordResult('loss')">❌ صفقة خاسرة</button>
@@ -1567,6 +1572,28 @@
                     </div>
                 </div>
             `;
+            renderSpreadWarn();
+        }
+
+        // سبريد eToro: يحفظه مع التوصية ويحسب صافي الهدف والخسارة لكل سهم
+        function spreadCalc(p) {
+            if (!p || p.spread == null || isNaN(p.spread)) return null;
+            const sp = p.spread / 100, tgt = Math.abs(+p.tp2 - +p.entry), risk = Math.abs(+p.entry - +p.sl);
+            return { sp, win: tgt - sp, loss: risk + sp };
+        }
+        function onSpreadInput(v) {
+            const p = pinnedRecommendation; if (!p) return;
+            p.spread = v === '' ? null : Math.max(0, parseFloat(v));
+            localStorage.setItem('pinnedRec', JSON.stringify(p)); renderSpreadWarn();
+        }
+        function renderSpreadWarn() {
+            const el = document.getElementById('spreadWarn'); if (!el) return;
+            const c = spreadCalc(pinnedRecommendation);
+            if (!c) { el.innerHTML = '<span style="color:#999">اكتب السبريد اللي تشوفه في eToro قبل الدخول.</span>'; return; }
+            if (c.win <= 0) { el.innerHTML = `<b style="color:#b91c1c">⛔ السبريد أكبر من الهدف: الصفقة خاسرة حتى لو وصلت الهدف. تخطّها.</b>`; return; }
+            const be = (c.loss / (c.win + c.loss) * 100).toFixed(0);
+            const col = c.win < c.loss ? '#b45309' : '#15803d', ic = c.win < c.loss ? '⚠' : '✅';
+            el.innerHTML = `<b style="color:${col}">${ic} صافي الهدف +$${c.win.toFixed(2)} · صافي الوقف −$${c.loss.toFixed(2)} للسهم</b><br>نسبة النجاح المطلوبة للتعادل: ${be}%${c.win < c.loss ? ' (الربح الصافي أقل من الخسارة)' : ''}`;
         }
 
         function pinRecommendation() {
@@ -1598,6 +1625,8 @@
                 symbol: pinnedRecommendation.symbol + (auto ? ' (آلي)' : ''),
                 time: new Date().toLocaleTimeString('ar-AE')
             };
+            const sc = spreadCalc(pinnedRecommendation);
+            if (sc) { result.spread = pinnedRecommendation.spread; result.net = type === 'profit' ? sc.win : type === 'loss' ? -sc.loss : null; }
             
             results.push(result); localStorage.setItem('results', JSON.stringify(results)); logRec(type, auto);
             
@@ -1643,9 +1672,14 @@
                         <span class="result-status">${result.type === 'profit' ? '✅ ربح' : result.type === 'timeout' ? '⏱ خروج بالوقت' : '❌ خسارة'}</span>
                         ${result.symbol}
                     </div>
-                    <span class="result-time">${result.time}</span>
+                    <span class="result-time">${result.time}${result.spread != null ? ' · سبريد ' + result.spread + '¢' : ''}${result.net != null ? ' · صافي ' + (result.net >= 0 ? '+' : '−') + '$' + Math.abs(result.net).toFixed(2) + '/سهم' : ''}</span>
                 </div>
             `).join('');
+            const ws = results.filter(r => r.spread != null);
+            if (ws.length) {
+                const avg = ws.reduce((a, r) => a + r.spread, 0) / ws.length, wn = ws.filter(r => r.net != null), tot = wn.reduce((a, r) => a + r.net, 0);
+                list.innerHTML = `<div style="font-size:13px;color:#555;margin-bottom:8px">صفقات بسبريد مسجّل: ${ws.length} · متوسط السبريد ${avg.toFixed(1)}¢ · الصافي المجمّع ${tot >= 0 ? '+' : '−'}$${Math.abs(tot).toFixed(2)}/سهم (${wn.length} صفقة بنتيجة هدف أو وقف)</div>` + list.innerHTML;
+            }
         }
 
         function clearResults() {
@@ -2173,7 +2207,7 @@
         // ===== تتبع ورقي آلي: يراقب سعر التوصية المثبتة ويسجل النتيجة (تقريبي: يعتمد على سعر Finnhub كل 30 ثانية) =====
         function logRec(type, auto) {
             try { const p = pinnedRecommendation; if (!p) return; const L = JSON.parse(localStorage.getItem('recLog') || '[]');
-                L.push({ day: p.day, sym: p.symbol, strat: p.reasons && p.reasons[0], e: p.entry, sl: p.sl, tp: p.tp2, res: type, auto: !!auto, t: new Date().toISOString().slice(0, 16) });
+                L.push({ day: p.day, sym: p.symbol, strat: p.reasons && p.reasons[0], e: p.entry, sl: p.sl, tp: p.tp2, spread: p.spread ?? null, res: type, auto: !!auto, t: new Date().toISOString().slice(0, 16) });
                 localStorage.setItem('recLog', JSON.stringify(L.slice(-300))); } catch (e) {}
         }
         async function trackPinned() {
