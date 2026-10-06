@@ -993,7 +993,7 @@
             soundEnabled: true
         };
 
-        var APP_VERSION = '1.4 · 2026-10-04';
+        var APP_VERSION = '1.5 · 2026-10-06';
         let results = [];
         let consecutiveLosses = 0;
         let dailyTradesCount = 0;
@@ -2139,9 +2139,70 @@
         // مجموعة أسهم سائلة ومتحركة (الفلتر الحقيقي بالسعر الحي: $3–$200). مفاتيح المجاني ما تكفي لمسح كل السوق.
         const SCAN_UNIVERSE = 'AMD,INTC,MU,SMCI,PLTR,SOFI,SNAP,PINS,RBLX,U,DKNG,HOOD,AFRM,UPST,COIN,MARA,RIOT,CLSK,IREN,CIFR,HUT,RGTI,QBTS,IONQ,QUBT,OKLO,SMR,NNE,CCJ,UUUU,LEU,ENPH,SEDG,RUN,FSLR,PLUG,FCEL,BE,JOBY,ACHR,RKLB,ASTS,LUNR,AMC,GME,HIMS,ROKU,SHOP,PYPL,F,GM,RIVN,LCID,NIO,XPEV,LI,BABA,JD,PDD,SOUN,BBAI,APLD,NBIS,NU,PATH,AI,S,DOCN,FUBO,OPEN,CHPT,LAZR,UAL,AAL,DAL,CCL,NCLH,T,VZ,PFE,BAC,WFC,C,KGC,HL,AG,PAAS,FCX,CLF,AA,OXY,DVN,SLB,HAL,MRNA,NVAX,TLRY,CGC,WBD,PARA,CVNA,ETSY,CHWY,W,LYFT,UBER,DASH,TWLO,PTON,SPCE,BB,NOK,ERIC,TLN,VST,GEV'.split(',');
         let scanBusy = false; const scanRecDay = {}; const scanState = { at: 0, n: 0, rows: [], msg: '' };
+
+        // ===== معايرة الحجم لكل سهم =====
+        // Twelve Data المجاني: حجم اليوم الحالي جزئي (~5% من السوق) والأيام السابقة كاملة (تتبدّل بعد منتصف الليل بتوقيت نيويورك).
+        // نسجّل حجم أول 15د الجزئي لكل سهم يومياً، وثاني يوم نقسمه على الكامل لنفس اليوم = نسبة تغطية السهم.
+        // وقت المسح: حجم اليوم ÷ نسبة تغطية السهم نفسه، ثم المقارنة بمتوسط 20 يوم مثل قبل.
+        const VC_KEY = 'volCal';
+        function vcLoad() { try { const o = JSON.parse(localStorage.getItem(VC_KEY) || '{}'); o.p = o.p || {}; o.s = o.s || {}; return o; } catch (e) { return { p: {}, s: {} }; } }
+        function vcSave(o) { try { Object.keys(o.p).sort().slice(0, -8).forEach(d => delete o.p[d]); localStorage.setItem(VC_KEY, JSON.stringify(o)); } catch (e) {} }
+        // مجموع حجم أول 3 شموع (أول 15د) ليوم معيّن، بنفس شرط prepFrozen. vals مرتبة تصاعدياً.
+        function f15Raw(vals, day) {
+            const k = vals.findIndex(v => v.datetime.slice(0, 10) === day);
+            if (k < 0 || vals[k].datetime.slice(11, 16) > '09:35' || !vals[k + 3] || vals[k + 3].datetime.slice(0, 10) !== day) return 0;
+            return +vals[k].volume + +vals[k + 1].volume + +vals[k + 2].volume;
+        }
+        // نسبة تغطية السهم: وسيط آخر 5 أيام مسجّلة. 0 = ما في معايرة بعد.
+        function vcShare(o, sym, vals, today) {
+            const s = o.s[sym] = o.s[sym] || {};
+            for (const day of Object.keys(o.p)) {
+                if (day >= today || s[day] != null || !o.p[day][sym]) continue;
+                const full = f15Raw(vals, day); if (!full) continue;
+                const r = o.p[day][sym] / full;
+                if (r > 0.003 && r < 0.6) s[day] = +r.toFixed(4); // ≥0.6 = بيانات ذاك اليوم ما تبدّلت بالكاملة بعد
+            }
+            const ks = Object.keys(s).sort(); ks.slice(0, -5).forEach(k => delete s[k]);
+            const a = ks.slice(-5).map(k => s[k]).sort((x, y) => x - y), m = a.length >> 1;
+            return !a.length ? 0 : a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+        }
+        // تسجيل حجم أول 15د الجزئي لكل الأسهم: بعد نافذة المسح (14:00 نيويورك) ولين منتصف الليل بتوقيت نيويورك
+        let vcBusy = false;
+        async function volCalRecord() {
+            if (vcBusy || scanBusy || !config.tdKey || config.scanOn === false) return;
+            const day = nyDay(); if (getNYParts().mins <= 840) return;
+            const wd = new Date(day + 'T12:00:00Z').getUTCDay(); if (wd === 0 || wd === 6) return;
+            const vc = vcLoad(), rec = vc.p[day] = vc.p[day] || {};
+            if (rec._none || SCAN_UNIVERSE.every(s => s in rec)) return;
+            vcBusy = true; keepAwake();
+            try {
+                for (const s of SCAN_UNIVERSE) {
+                    if (s in rec) continue;
+                    if (nyDay() !== day) break; // عدّى منتصف الليل: البيانات صارت كاملة، ما تنفع للتسجيل
+                    scanState.msg = `📏 تسجيل معايرة الحجم ${SCAN_UNIVERSE.filter(x => x in rec).length}/${SCAN_UNIVERSE.length}...`; renderScan();
+                    let d = null; try { d = await (await fetch(tdUrl(s, 100).replace('order=desc', 'order=asc'), { cache: 'no-store' })).json(); } catch (e) {}
+                    await wait(8000);
+                    if (!d || d.code === 429) { await wait(60000); continue; } // حد الدقيقة: نكمل الباقي ونرجع له الدورة الجاية
+                    if (!d.values) { if (d.code === 401) { scanState.msg = '⚠ مفتاح Twelve Data مرفوض (401)'; break; } rec[s] = 0; vcSave(vc); continue; }
+                    d.values.sort((a, b) => a.datetime < b.datetime ? -1 : 1);
+                    if (!d.values.some(v => v.datetime.slice(0, 10) === day)) { // سهم بدون شموع اليوم: عطلة لو ولا سهم انسجّل له حجم اليوم
+                        if (!SCAN_UNIVERSE.some(x => rec[x] > 0)) { rec._none = 1; vcSave(vc); break; }
+                        rec[s] = 0; vcSave(vc); continue;
+                    }
+                    rec[s] = f15Raw(d.values, day); vcSave(vc);
+                }
+            } finally { vcBusy = false; }
+            if (SCAN_UNIVERSE.every(s => s in rec)) scanState.msg = '📏 اكتمل تسجيل معايرة اليوم';
+            renderScan();
+        }
+        function vcStatus() {
+            const vc = vcLoad(), rd = vc.p[nyDay()] || {};
+            return 'معايرة الحجم: سُجّل اليوم ' + SCAN_UNIVERSE.filter(s => s in rd).length + '/' + SCAN_UNIVERSE.length + ' · أسهم معايَرة ' + Object.keys(vc.s).filter(s => Object.keys(vc.s[s]).length).length;
+        }
+
         function renderScan() {
             const t = scanState.at ? new Date(scanState.at).toLocaleTimeString('ar-AE') : '-';
-            $('scanOut').innerHTML = `<div style="font-size:13px;color:#666">نسخة ${APP_VERSION} · Finnhub ${config.finnhubKey ? '✅' : '❌'} · Twelve Data ${config.tdKey ? '✅' : '❌'} · إشعارات ${('Notification' in window && Notification.permission === 'granted') ? '✅' : '❌'}</div><div style="font-size:14px;line-height:1.9"><b>${scanState.msg}</b><br>آخر مسح: ${t} · فُحص ${scanState.n} سهم${scanState.dur ? ' · ' + scanState.dur + 'ث' : ''}${scanState.diag ? '<br>تشخيص: سعر/حداثة ' + scanState.diag.ok + ' · فجوة≥2%: ' + scanState.diag.gap + ' · شموع غير متوفرة: ' + scanState.diag.nocandle + ' · شموع متأخرة: ' + scanState.diag.late + ' · فرق سعر: ' + scanState.diag.diff + ' · حجم أول 15د < ×2: ' + scanState.diag.rv + ' · بلا إشارة: ' + scanState.diag.nosig + ' · وقف > 1%: ' + scanState.diag.far + ' · توصيات: ' + scanState.diag.rec : ''}</div>` +
+            $('scanOut').innerHTML = `<div style="font-size:13px;color:#666">نسخة ${APP_VERSION} · Finnhub ${config.finnhubKey ? '✅' : '❌'} · Twelve Data ${config.tdKey ? '✅' : '❌'} · إشعارات ${('Notification' in window && Notification.permission === 'granted') ? '✅' : '❌'}<br>${vcStatus()}</div><div style="font-size:14px;line-height:1.9"><b>${scanState.msg}</b><br>آخر مسح: ${t} · فُحص ${scanState.n} سهم${scanState.dur ? ' · ' + scanState.dur + 'ث' : ''}${scanState.diag ? '<br>تشخيص: سعر/حداثة ' + scanState.diag.ok + ' · فجوة≥2%: ' + scanState.diag.gap + ' · شموع غير متوفرة: ' + scanState.diag.nocandle + ' · شموع متأخرة: ' + scanState.diag.late + ' · فرق سعر: ' + scanState.diag.diff + ' · بلا معايرة: ' + (scanState.diag.nocal || 0) + ' · حجم أول 15د < ×2: ' + scanState.diag.rv + ' · بلا إشارة: ' + scanState.diag.nosig + ' · وقف > 1%: ' + scanState.diag.far + ' · توصيات: ' + scanState.diag.rec : ''}</div>` +
                 scanState.rows.map(r => `<div class="result-item ${r.flag ? 'profit' : ''}" style="margin-top:6px"><div><b>${r.s}</b> $${r.c.toFixed(2)}</div><span class="result-time">فجوة ${r.gap >= 0 ? '+' : ''}${r.gap.toFixed(1)}% · اليوم ${r.chg >= 0 ? '+' : ''}${r.chg.toFixed(1)}%${r.note ? ' · ' + r.note : ''}${r.watch ? '<br>' + r.watch : ''}</span></div>`).join('');
         }
         async function scanCycle() {
@@ -2149,7 +2210,7 @@
             try { const st = JSON.parse(localStorage.getItem('tradingAppSettings') || '{}'); if (st.finnhubKey) config.finnhubKey = st.finnhubKey; if (st.tdKey) config.tdKey = st.tdKey; } catch (e) {}
             const mn = getNYParts().mins, why = config.scanOn === false ? 'الماسح متوقف من الإعدادات' : !config.finnhubKey || !config.tdKey ? '⚠ ' + (!config.finnhubKey ? 'مفتاح Finnhub ناقص' : 'مفتاح Twelve Data ناقص') + ' (من الإعدادات)' : !isUSMarketOpen() ? 'السوق مغلق' : (mn < 585 || mn > 840) ? 'خارج نافذة المسح (9:45–14:00 نيويورك)' : '';
             if (why) { scanState.msg = '⏸ ' + why; renderScan(); return; }
-            keepAwake(); scanBusy = true; const t0 = Date.now(), diag = { q: 0, ok: 0, gap: 0, cand: 0, nocandle: 0, late: 0, diff: 0, rv: 0, eval: 0, nosig: 0, far: 0, rec: 0 };
+            keepAwake(); scanBusy = true; const t0 = Date.now(), diag = { q: 0, ok: 0, gap: 0, cand: 0, nocandle: 0, late: 0, diff: 0, nocal: 0, rv: 0, eval: 0, nosig: 0, far: 0, rec: 0 };
             try {
                 const rows = []; let n = 0;
                 for (const sym of SCAN_UNIVERSE) {
@@ -2170,13 +2231,19 @@
                     const lv = d.values[d.values.length - 1], lm = +lv.datetime.slice(11, 13) * 60 + +lv.datetime.slice(14, 16);
                     if (lv.datetime.slice(0, 10) !== nyDay() || getNYParts().mins - lm > 15) { r.note = 'شموع متأخرة ' + (getNYParts().mins - lm) + 'د'; diag.late++; continue; }
                     if (Math.abs(+lv.close - r.c) / r.c > 0.015) { r.note = 'فرق سعر الشموع'; diag.diff++; continue; }
+                    // معايرة الحجم: نسجّل حجم اليوم الجزئي، ونحسب نسبة تغطية السهم من أيامه السابقة المسجّلة
+                    const today = nyDay(), vc = vcLoad(), part = f15Raw(d.values, today);
+                    if (part) (vc.p[today] = vc.p[today] || {})[r.s] = part;
+                    const sh = vcShare(vc, r.s, d.values, today); vcSave(vc);
+                    if (!sh) { r.note = 'بلا معايرة حجم'; diag.nocal++; continue; }
                     const D = prepFrozen(prep(d.values.map(v => ({ t: v.datetime, o: +v.open, h: +v.high, l: +v.low, c: +v.close, v: +v.volume })))), i = D.c.length - 2;
-                    const rv = D.gv[i] || 0; if (rv < FROZEN.minRv) { r.note = 'حجم أول 15د ×' + rv.toFixed(1); diag.rv++; continue; }
+                    for (let k = 0; k < D.c.length; k++) if (D.d[k] === today) D.gv[k] /= sh; // حجم اليوم الجزئي ← تقدير الكامل
+                    const rv = D.gv[i] || 0; if (rv < FROZEN.minRv) { r.note = 'حجم أول 15د ×' + rv.toFixed(1) + ' (تغطية ' + (sh * 100).toFixed(1) + '%)'; diag.rv++; continue; }
                     r.watch = '👀 قمة أول 15د ' + ((D.f15H[i] - r.c) / r.c * 100).toFixed(1) + '% فوق السعر · VWAP ' + ((r.c - D.vwap[i]) / D.vwap[i] * 100).toFixed(1) + '% · حجم ×' + rv.toFixed(1);
                     r.note = 'بلا إشارة'; diag.eval++; for (const k of ['gapGo', 'vwapPb']) { const g = frozenSignal(D, i, k); if (!g) continue;
                         const q2 = await (await fetch(`https://finnhub.io/api/v1/quote?symbol=${r.s}&token=${encodeURIComponent(config.finnhubKey)}`)).json(), e = q2 && q2.c > 0 ? q2.c : r.c, rr = e - g.stop; if (!(rr > 0) || rr / e * 100 > FROZEN.maxStopPct) { r.note = 'وقف أبعد من 1%'; continue; }
                         pinnedRecommendation = { symbol: r.s, dir: 1, scan: true, entry: e.toFixed(2), tp1: (e + rr).toFixed(2), tp2: (e + rr * FROZEN.tp).toFixed(2), sl: g.stop.toFixed(2), rr: '2.00', confluence: 5,
-                            reasons: [FROZEN[k].name, 'فجوة +' + r.gap.toFixed(1) + '%', 'حجم أول 15د ×' + D.gv[i].toFixed(1), 'وقف ' + (rr / e * 100).toFixed(2) + '%'], day: nyDay(), exp: FROZEN[k].exit };
+                            reasons: [FROZEN[k].name, 'فجوة +' + r.gap.toFixed(1) + '%', 'حجم أول 15د ×' + D.gv[i].toFixed(1) + ' (معايَر)', 'وقف ' + (rr / e * 100).toFixed(2) + '%'], day: nyDay(), exp: FROZEN[k].exit };
                         localStorage.setItem('pinnedRec', JSON.stringify(pinnedRecommendation)); scanRecDay[r.s] = nyDay(); r.flag = true; r.note = 'توصية ' + FROZEN[k].name;
                         displayRecommendation(); if (config.soundEnabled) playSound(); notifyRec(pinnedRecommendation); break;
                     }
@@ -2186,7 +2253,7 @@
             } catch (e) { scanState.msg = 'خطأ في المسح: ' + e.message; renderScan(); }
             scanBusy = false;
         }
-        (async function scanLoop() { for (;;) { try { await scanCycle(); } catch (e) {} await wait(60000); } })();
+        (async function scanLoop() { for (;;) { try { await scanCycle(); } catch (e) {} try { await volCalRecord(); } catch (e) {} await wait(60000); } })();
     
         // عمر آخر صفقة على الكرت: ⚠ لو الجلسة مفتوحة والسعر أقدم من 10 دقائق
         function ageTag(q) {
