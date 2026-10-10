@@ -931,6 +931,7 @@
                 <div class="form-group"><label class="form-label">السبريد لكل سهم (سنت)</label><input id="v2Cost" type="number" class="form-input" value="35" min="0" max="100"></div>
                 <button class="btn-primary" style="width:100%" onclick="v2Download()">📥 تحميل البيانات (يكمل من حيث وقف)</button>
                 <button class="btn-primary" style="width:100%;margin-top:8px;background:#27ae60" onclick="v2Backtest()">▶️ شغّل الباك تست</button>
+                <button class="btn-primary" style="width:100%;margin-top:8px;background:#8e44ad" onclick="v2Explore()">🔬 بحث عن نسخة أفضل (تدريب/اختبار)</button>
                 <button class="btn-primary" style="width:100%;margin-top:8px;background:#999" onclick="v2Stop=true">⏹ إيقاف التحميل</button>
                 <div id="v2ProgWrap" style="display:none;margin-top:10px"><div style="height:8px;background:#e0e0e0;border-radius:4px"><div id="v2ProgBar" style="height:100%;width:0;background:#667eea;border-radius:4px"></div></div><div id="v2ProgText" style="font-size:12px;color:#666;margin-top:4px"></div></div>
             </div>
@@ -956,12 +957,12 @@
             </div>
 
             <div class="settings-section"><div class="settings-title">🔭 الماسح الآلي</div>
-                <div class="toggle-switch"><span>تفعيل (توصيات 2.0: أسهم من $20 إلى $100)</span><label class="switch"><input type="checkbox" id="scanToggle" checked onchange="config.scanOn=this.checked;localStorage.setItem('tradingAppSettings',JSON.stringify(config))"><span class="slider"></span></label></div></div>
+                <div class="toggle-switch"><span>تفعيل (إشارات تجريبية 2.1: Gap & Go، أسهم من $20 إلى $100)</span><label class="switch"><input type="checkbox" id="scanToggle" checked onchange="config.scanOn=this.checked;localStorage.setItem('tradingAppSettings',JSON.stringify(config))"><span class="slider"></span></label></div></div>
             <div class="settings-section"><div class="settings-title">💰 المخاطرة والتجربة</div>
                 <div class="form-group"><label class="form-label">المخاطرة لكل صفقة بالدولار (الخسارة لو ضرب الوقف)</label><input type="number" id="riskUsd" class="form-input" min="1" step="1" value="10"></div>
                 <div class="form-group"><label class="form-label">أيام بدون تداول (تواريخ YYYY-MM-DD مفصولة بفاصلة، مثلاً أيام الفيدرالي)</label><input type="text" id="noTradeDays" class="form-input" style="direction:ltr" placeholder="2026-10-28, 2026-12-09"></div>
                 <button class="btn-primary" onclick="config.riskUsd=Math.max(1,+$('riskUsd').value||10);config.noTradeDays=$('noTradeDays').value.trim();localStorage.setItem('tradingAppSettings',JSON.stringify(config));alert('✅ تم الحفظ')">💾 حفظ</button>
-                <div style="font-size:12px;color:#666;margin-top:8px;line-height:1.7">الوقف ثابت 1.05$ والهدف +2.10$ لكل سهم. عدد الأسهم = المخاطرة ÷ 1.40$. صفقتين باليوم كحد أقصى، والماسح يوقف بعد أول خسارة باليوم، ويوقف التجربة لو التراكمي وصل −10R.</div></div>
+                <div style="font-size:12px;color:#666;margin-top:8px;line-height:1.7">الوقف ثابت 1.05$ والهدف +2.10$ لكل سهم. عدد الأسهم = المخاطرة ÷ 1.40$. صفقتين باليوم كحد أقصى، والماسح يوقف بعد أول خسارة باليوم، ويوقف التجربة لو التراكمي وصل −10R.<br><b>نسخة 2.1: الإشارات تجريبية (ورقية) لين يثبت الباك تست ميزة. اختراق قمة الأمس موقوف.</b></div></div>
             <div class="settings-section">
                 <div class="settings-title">🕯️ مفتاح Twelve Data (الشموع)</div>
                 <div class="form-group"><input type="text" id="tdKey" class="form-input" placeholder="Twelve Data API key" style="direction:ltr"></div>
@@ -1013,7 +1014,7 @@
             soundEnabled: true
         };
 
-        var APP_VERSION = '2.0 · 2026-10-10';
+        var APP_VERSION = '2.1 · 2026-10-10';
         let results = [];
         let consecutiveLosses = 0;
         let dailyTradesCount = 0;
@@ -2232,7 +2233,7 @@
         // الوقف ثابت بالدولار (1.05$ = 3× سبريد 35¢) والهدف 2R، خروج بالوقت 15:45، صفقتين باليوم ووقف بعد أول خسارة.
         // الاستراتيجيتين القديمتين (Gap & Go 1% وارتداد VWAP) بوضع مراقبة: تنسجل إشاراتهم ونتايجها للمقارنة بس، بدون توصية.
         const V2 = { minPrice: 20, maxPrice: 100, minAvgVol: 1e6, minGap: 4, minRv: 3, themeGap: 3, preFade: 1.5, maxAboveOpen: 1.05,
-                     stop: 1.05, tpR: 2, exit: '15:45', ggFrom: 585, ggTo: 600, brkFrom: 600, brkTo: 870, brkChase: 0.35, brkMinChg: 2,
+                     stop: 1.05, tpR: 2, exit: '15:45', ggFrom: 585, ggTo: 600, brkFrom: 600, brkTo: 870, brkChase: 0.35, brkMinChg: 2, brkOn: false, paper: true,
                      maxTrades: 2, maxLosses: 1, killR: -10, beWin: 44.4, mnaGap: 15, mnaRange: 1, defSpread: 0.35 };
         const SECTOR_LIST = {
             'رقائق': 'AMD,INTC,MU,SMCI,WOLF,PENG', 'برمجيات/سحابة': 'PLTR,PATH,AI,S,DOCN,TWLO,SOUN,BBAI,U,SHOP,FSLY', 'إنترنت/إعلام': 'SNAP,PINS,RBLX,ROKU,ETSY,CHWY,W,FUBO,WBD,PARA',
@@ -2368,7 +2369,7 @@
                     await v2Fire(r, 'GG', { ...ctx0, rv: +rv.toFixed(2) }, diag);
                 }
                 // ---- BRK-YH: اختراق قمة الأمس 10:00–14:30 ----
-                if (mn >= V2.brkFrom && !pinnedRecommendation) {
+                if (V2.brkOn && mn >= V2.brkFrom && !pinnedRecommendation) {
                     const bc = rows.filter(r => inR(r) && r.gap < V2.minGap && r.chg >= V2.brkMinChg && scanRecDay[r.s] !== today).sort((a, b) => b.chg - a.chg).slice(0, 5); diag.brkCand = bc.length;
                     const BI = jget('brkInfo', {}); if (BI.day !== today) { BI.day = today; BI.s = {}; }
                     for (const r of bc) {
@@ -2476,7 +2477,7 @@
             const sp = p.spread != null && !isNaN(p.spread) ? p.spread : null, cost = sp != null ? sp / 100 : V2.defSpread, net = exit - ref - cost;
             const [h0, m0] = (p.t || hmNow()).split(':').map(Number), mins = Math.max(0, getNYParts().mins - (h0 * 60 + m0));
             const j = { day: p.day, t: p.t, tExit: hmNow(), sym: p.symbol, pattern: p.pattern, entry: +p.entry, actual: p.actualEntry || null, slip: p.actualEntry ? +(p.actualEntry - p.entry).toFixed(2) : null,
-                        sl: +p.sl, tp: +p.tp2, exit: +exit.toFixed(2), res: type, auto: !!auto, executed: !!p.executed, shares: p.shares, spread: sp, spreadAssumed: sp == null,
+                        sl: +p.sl, tp: +p.tp2, exit: +exit.toFixed(2), res: type, auto: !!auto, paper: !!V2.paper, executed: !!p.executed, shares: p.shares, spread: sp, spreadAssumed: sp == null,
                         net: +net.toFixed(2), R: +(net / V2.stop).toFixed(2), mfe: p.mfe || 0, mae: p.mae || 0, t1R: p.tFirst1R || null, mins, ctx: p.ctx, iwmExit: iwmNow != null ? +iwmNow.toFixed(2) : null, note: p.note || '' };
             j.why = whyResult(j);
             const J = journal(); J.push(j); jset('journalV2', J.slice(-500)); return j;
@@ -2488,6 +2489,7 @@
             const chips = (p.reasons || []).map(r => `<span style="background:#eef0ff;color:#667eea;padding:3px 8px;border-radius:10px;font-size:11px;margin-left:5px;display:inline-block;margin-bottom:4px">✓ ${r}</span>`).join('');
             $('recommendationContainer').innerHTML = `
                 <div class="recommendation-card rec-pinned">
+                    ${V2.paper ? '<div style="background:#fef3c7;color:#92400e;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-weight:bold;font-size:13px">🧪 تجريبي — لا تتداول بفلوس حقيقية. الباك تست (12 شهر) ما أثبت ميزة بعد سبريد 30¢. سجّل السبريد اللي تشوفه في eToro بس.</div>' : ''}
                     <div class="rec-title">🎯 شراء ${p.symbol} <span class="confluence-badge">${p.pattern === 'GG' ? 'Gap & Go' : 'اختراق قمة الأمس'} · ${p.t}</span></div>
                     <div style="margin-bottom:12px;line-height:2">${chips}</div>
                     <div class="rec-grid">
@@ -2503,7 +2505,7 @@
                     <div class="form-group"><label class="form-label">سبريد eToro وقت الدخول (سنت)</label>
                         <input id="recSpread" type="number" min="0" step="1" inputmode="numeric" class="form-input" placeholder="مثلاً 8" value="${p.spread ?? ''}" oninput="onSpreadInput(this.value)">
                         <div id="spreadWarn" style="font-size:13px;margin-top:6px;line-height:1.7"></div></div>
-                    <div class="toggle-switch" style="margin-bottom:10px"><span>نفّذت الصفقة فعلياً؟</span><label class="switch"><input type="checkbox" ${p.executed ? 'checked' : ''} onchange="onRecField('executed',this.checked)"><span class="slider"></span></label></div>
+                    <div class="toggle-switch" style="margin-bottom:10px"><span>${V2.paper ? 'تابعتها (ورقياً)؟' : 'نفّذت الصفقة فعلياً؟'}</span><label class="switch"><input type="checkbox" ${p.executed ? 'checked' : ''} onchange="onRecField('executed',this.checked)"><span class="slider"></span></label></div>
                     <div class="form-group"><label class="form-label">ملاحظتك (اختياري: ليش دخلت/طلعت، شي لاحظته)</label>
                         <input type="text" class="form-input" value="${(p.note || '').replace(/"/g, '&quot;')}" oninput="onRecField('note',this.value)"></div>
                     <div id="v2Live" style="font-size:12px;color:#666;margin-bottom:8px">أقصى ربح أثناء الصفقة: +$${(p.mfe || 0).toFixed(2)} · أقصى نزول: −$${Math.abs(p.mae || 0).toFixed(2)} · آخر سعر $${(+p.last || +p.entry).toFixed(2)}</div>
@@ -2684,6 +2686,80 @@
             const txt = `Backtest v2 ${new Date().toISOString().slice(0, 10)} | ${months}m | ${names.length} syms | cost ${(cost * 100).toFixed(0)}c\nSYSTEM 2R: ${f(sys2, true)}\n` + rowsT.map(([nm, A]) => `${nm}: 1R ${f(st(A, 1, cost))} | 1.5R ${f(st(A, 1.5, cost))} | 2R ${f(st(A, 2, cost))} | 2R@4c ${f(st(A, 2, 0.04))}`).join('\n') + '\n' + bands.replace(/<br>/g, '\n') + '\nQuarters: ' + qs.map(([k, v]) => k + ' ' + v.toFixed(1)).join(', ');
             localStorage.setItem('v2BtText', txt); localStorage.setItem('v2BtHtml', h); v2Prog(100, ''); v2Log(h);
         }
+        // ===== 2.1: بحث عن نسخة أفضل من Gap & Go بتقسيم تدريب/اختبار =====
+        // نختار التوليفة على أول ثلثين من الأيام (تدريب)، ونحكم عليها من آخر ثلث (اختبار) اللي ما شافته.
+        // دخول 9:45 فقط (الواقعي للماسح). اختراق قمة الأمس انشال لأنه خسران حتى قبل السبريد.
+        function simX(P, from, to, e, R, k, exitHm) {
+            const sl = e - R, tp = e + R * k;
+            for (let i = from; i < to; i++) {
+                if (P.hm[i] >= exitHm) return { g: P.o[i] - e, res: 'T' };
+                if (P.l[i] <= sl) return { g: -R, res: 'L' };
+                if (P.h[i] >= tp) return { g: R * k, res: 'W' };
+            }
+            return { g: P.c[to - 1] - e, res: 'T' };
+        }
+        async function v2Explore() {
+            const months = +$('v2Months').value, cost = (+$('v2Cost').value || 35) / 100, cut = new Date(Date.now() - months * 30.44 * 864e5).toISOString().slice(0, 10);
+            v2Prog(2, 'تحميل البيانات المحفوظة...'); await wait(0);
+            const S = {}; let k = 0; const syms = BT_SYMS();
+            for (const s of syms) { const P = await dbGet('v2:' + s); if (P && P.days.length > 30) S[s] = { P, D: dailyOf(P) }; if (++k % 10 === 0) { v2Prog(2 + k / syms.length * 20, 'تحميل ' + k + '/' + syms.length); await wait(0); } }
+            const names = Object.keys(S).filter(s => s !== 'IWM');
+            if (names.length < 10) { v2Prog(100, ''); return v2Log('البيانات المحمّلة قليلة. اضغط "تحميل البيانات" أول.'); }
+            const iwm = S.IWM ? Object.fromEntries(S.IWM.D.map((x, i, A) => [x && x.d, x && i > 0 && A[i - 1] ? x.p45 > A[i - 1].C : null]).filter(x => x[0])) : {};
+            const gapDay = {};
+            for (const s of names) { const D = S[s].D; for (let i = 1; i < D.length; i++) if (D[i] && D[i - 1]) (gapDay[D[i].d] = gapDay[D[i].d] || {})[s] = (D[i].O / D[i - 1].C - 1) * 100; }
+            const allDays = Object.keys(gapDay).filter(d => d >= cut).sort(), split = allDays[Math.floor(allDays.length * 2 / 3)];
+            // إشارات GG 9:45 الأساسية (بدون شرط الابتعاد عن الافتتاح، ينطبق حسب التوليفة)
+            const base = [];
+            for (const s of names) {
+                const { P, D } = S[s];
+                for (let i = 15; i < D.length; i++) {
+                    const x = D[i], p = D[i - 1]; if (!x || !p || x.d < cut || x.b - x.a < 5) continue;
+                    const prior = D.slice(Math.max(0, i - 20), i).filter(Boolean); if (prior.length < 5) continue;
+                    const avgV = prior.reduce((a, y) => a + y.V, 0) / prior.length, avgF = prior.reduce((a, y) => a + y.f15, 0) / prior.length;
+                    if (x.O < V2.minPrice || x.O > V2.maxPrice || avgV < V2.minAvgVol) continue;
+                    const gap = (x.O / p.C - 1) * 100; if (gap < V2.minGap || !avgF || x.f15 / avgF < V2.minRv) continue;
+                    if (gap >= V2.mnaGap && (x.f15H - x.f15L) / x.O * 100 < V2.mnaRange) continue;
+                    if (!(x.p45 > x.O)) continue;
+                    const tr = []; for (let j = Math.max(1, i - 14); j < i; j++) { const y = D[j], pc = D[j - 1]; if (y) tr.push(pc ? Math.max(y.H - y.L, Math.abs(y.H - pc.C), Math.abs(y.L - pc.C)) : y.H - y.L); }
+                    const atr = tr.length ? tr.reduce((a, b) => a + b, 0) / tr.length : 0, sec = sectorOf(s);
+                    const theme = Object.entries(gapDay[x.d] || {}).filter(([t, g]) => t !== s && sectorOf(t) === sec && g >= V2.themeGap).length > 0;
+                    base.push({ s, d: x.d, P, a: x.a + 3, b: x.b, e: P.o[x.a + 3], O: x.O, f15L: x.f15L, atr, filt: theme || iwm[x.d] === true, ext: x.p45 - x.O });
+                }
+                if (++k % 10 === 0) { v2Prog(22 + k / (names.length * 2) * 40, 'تجهيز الإشارات...'); await wait(0); }
+            }
+            const STOPS = { fixed: ['ثابت 1.05$', b => V2.stop], f15: ['تحت قاع أول 15د', b => Math.max(V2.stop, b.e - b.f15L + 0.01)], atr: ['ربع ATR اليومي', b => Math.max(V2.stop, 0.25 * b.atr)] };
+            const EXITS = [[690, '11:30'], [810, '13:30'], [945, '15:45']], TPS = [1, 1.5, 2], MINP = [20, 50], FILT = [false, true], EXT = [true, false];
+            const combos = [];
+            for (const st of Object.keys(STOPS)) for (const [ex, exN] of EXITS) for (const tp of TPS) for (const mp of MINP) for (const fl of FILT) for (const ext of EXT) combos.push({ st, ex, exN, tp, mp, fl, ext });
+            const evalC = (c, part) => {
+                let n = 0, w = 0, sum = 0, gsum = 0;
+                for (const b of base) {
+                    if ((part === 'train') !== (b.d < split)) continue; if (b.O < c.mp || (c.fl && !b.filt)) continue;
+                    const R = STOPS[c.st][1](b); if (c.ext && b.ext > R) continue;
+                    const r = simX(b.P, b.a, b.b, b.e, R, c.tp, c.ex); n++; if (r.res === 'W') w++; sum += (r.g - cost) / R; gsum += r.g / R;
+                }
+                return n ? { n, win: w / n * 100, avg: sum / n, gross: gsum / n } : { n: 0, win: 0, avg: 0, gross: 0 };
+            };
+            const res = [];
+            for (let i = 0; i < combos.length; i++) { const c = combos[i]; res.push({ c, tr: evalC(c, 'train'), te: evalC(c, 'test') }); if (i % 12 === 0) { v2Prog(62 + i / combos.length * 36, `تجربة ${i}/${combos.length} توليفة`); await wait(0); } }
+            const name = c => `وقف ${STOPS[c.st][0]} · هدف ${c.tp}R · خروج ${c.exN} · سعر ≥${c.mp}$${c.fl ? ' · فلتر موضوع/IWM' : ''}${c.ext ? '' : ' · بدون حد ابتعاد'}`;
+            const fm = x => x.n ? `${x.n} · ${x.win.toFixed(0)}% · ${(x.avg >= 0 ? '+' : '') + x.avg.toFixed(2)}R` : '—';
+            const cur = res.find(r => r.c.st === 'fixed' && r.c.ex === 945 && r.c.tp === 2 && r.c.mp === 20 && r.c.fl && r.c.ext);
+            const top = res.filter(r => r.tr.n >= 15).sort((a, b) => b.tr.avg - a.tr.avg).slice(0, 8);
+            const best = top[0], pass = best && best.tr.avg > 0 && best.te.n >= 15 && best.te.avg >= 0.10;
+            const h = `<div class="results-title">🔬 بحث عن نسخة أفضل من Gap & Go (${months} شهر · ${names.length} سهم · ${combos.length} توليفة · سبريد ${(cost * 100).toFixed(0)}¢)</div>
+                <div style="font-size:13px;color:#555;line-height:1.8">التدريب: الأيام قبل ${split} · الاختبار: من ${split} (ما يُستخدم في الاختيار). إشارات GG 9:45 الأساسية: ${base.length}.</div>
+                <div style="font-size:14px;line-height:1.9;margin-top:8px"><b>القواعد الحالية (2.0):</b> تدريب ${cur ? fm(cur.tr) : '—'} · <b>اختبار ${cur ? fm(cur.te) : '—'}</b></div>
+                <div style="overflow-x:auto;margin-top:10px"><table style="font-size:12px;border-collapse:collapse;width:100%"><tr style="background:#eef0ff"><th>#</th><th>التوليفة (أفضل 8 على التدريب)</th><th>تدريب</th><th>اختبار</th><th>R قبل السبريد (اختبار)</th></tr>
+                ${top.map((r, i) => `<tr style="border-top:1px solid #eee"><td>${i + 1}</td><td>${name(r.c)}</td><td>${fm(r.tr)}</td><td><b>${fm(r.te)}</b></td><td>${r.te.n ? (r.te.gross >= 0 ? '+' : '') + r.te.gross.toFixed(2) + 'R' : '—'}</td></tr>`).join('')}</table></div>
+                <div style="margin-top:10px;font-size:14px"><b style="color:${pass ? '#15803d' : '#b45309'}">${pass ? 'الأولى عدّت الاختبار (≥15 صفقة ومتوسط ≥ +0.10R بعد السبريد). مبدئياً واعدة، بس اختيار الأفضل من ' + combos.length + ' يضخّم النتيجة، فالتجربة تبقى ورقية.' : 'ولا توليفة عدّت الاختبار بشكل مقنع (لازم ≥15 صفقة ومتوسط ≥ +0.10R بعد السبريد على الاختبار). الأرجح ما في ميزة تكفي سبريد ' + (cost * 100).toFixed(0) + '¢ في هالأسهم.'}</b></div>
+                <div style="font-size:12px;color:#666;margin-top:8px;line-height:1.7">جرّب نفس الشي بسبريد أقل (مثلاً 10¢) عشان تعرف كم سبريد تحتاج. نفس حدود الباك تست: قائمة الماسح بس، بدون أخبار وما قبل السوق، والشمعة اللي فيها الوقف والهدف = وقف.</div>
+                <button class="btn-primary" style="width:100%;margin-top:10px" onclick="v2CopyBt()">📋 نسخ النتيجة (أرسلها لـ Claude)</button>`;
+            const txt = `Explore v2.1 ${nyDay()} | ${months}m | ${names.length} syms | cost ${(cost * 100).toFixed(0)}c | split ${split} | base ${base.length}\nCURRENT: train ${cur ? fm(cur.tr) : '-'} | test ${cur ? fm(cur.te) : '-'}\n` + top.map((r, i) => `${i + 1}. ${name(r.c)} | train ${fm(r.tr)} | test ${fm(r.te)} | grossTest ${r.te.gross.toFixed(2)}R`).join('\n') + `\nPASS: ${pass}`;
+            localStorage.setItem('v2BtText', txt); localStorage.setItem('v2BtHtml', h); v2Prog(100, ''); v2Log(h);
+        }
+
         function v2CopyBt() { const t = localStorage.getItem('v2BtText') || ''; try { navigator.clipboard.writeText(t); alert('✅ انسخت النتيجة'); } catch (e) { prompt('انسخ النتيجة:', t); } }
         window.addEventListener('DOMContentLoaded', () => { const h = localStorage.getItem('v2BtHtml'); if (h && $('v2BtOut')) $('v2BtOut').innerHTML = h + '<div style="color:#666;font-size:12px;margin-top:6px">(آخر نتيجة محفوظة)</div>'; });
 
@@ -2723,7 +2799,7 @@
         function askNotif() { if ('Notification' in window) Notification.requestPermission().then(p => { alert(p === 'granted' ? '✅ تم تفعيل الإشعارات' : 'لم يتم التفعيل'); renderScan(); }); }
         function notifyRec(r) {
             try { if (!('Notification' in window) || Notification.permission !== 'granted') return;
-                const t = '🎯 توصية ' + r.symbol, o = { body: `دخول ${r.entry} · هدف ${r.tp2} · وقف ${r.sl}`, vibrate: [200, 100, 200], tag: 'rec-' + r.symbol };
+                const t = (r.v2 && V2.paper ? '🧪 تجريبي · ' : '🎯 توصية ') + r.symbol, o = { body: `دخول ${r.entry} · هدف ${r.tp2} · وقف ${r.sl}`, vibrate: [200, 100, 200], tag: 'rec-' + r.symbol };
                 if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(g => g.showNotification(t, o)); else new Notification(t, o); } catch (e) {}
         }
         try { const rs = JSON.parse(localStorage.getItem('results') || '[]'); if (Array.isArray(rs) && !results.length) { rs.forEach(x => results.push(x)); updateStatistics(); } } catch (e) {}
