@@ -1,3 +1,5 @@
+// نسخة 2.0: لا نخزّن طلبات المواقع الخارجية (Finnhub وTwelve Data) — كانت تتخزن كلها وتكبر بلا حد،
+// وممكن ترجع أسعار قديمة لو انقطع النت. نخزّن ملفات التطبيق بس (نفس الموقع).
 const CACHE_NAME = 'scalping-v2';
 const urlsToCache = [
   '/',
@@ -8,90 +10,46 @@ const urlsToCache = [
 
 // Install event
 self.addEventListener('install', event => {
-  console.log('Service Worker Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache).catch(err => {
-          console.log('Cache addAll error:', err);
-          // يعمل بدون أخطاء حتى لو بعض الملفات غير موجودة
-          return Promise.resolve();
-        });
-      })
+      .then(cache => cache.addAll(urlsToCache).catch(err => {
+        console.log('Cache addAll error:', err);
+        return Promise.resolve();
+      }))
   );
   self.skipWaiting();
 });
 
-// Activate event
+// Activate event: يمسح الكاش القديم (scalping-v1 وفيه ردود الـ API المتراكمة)
 self.addEventListener('activate', event => {
-  console.log('Service Worker Activating...');
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys().then(names => Promise.all(names.map(n => n !== CACHE_NAME ? caches.delete(n) : null)))
   );
   self.clients.claim();
 });
 
-// Fetch event - Network first, then cache
+// Fetch event - Network first, then cache (ملفات التطبيق فقط)
 self.addEventListener('fetch', event => {
-  // لا نتعامل مع POST requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // لا نخزّن ولا نخدم أسعار/شموع من الكاش: طلبات Finnhub وTwelve Data تروح للشبكة دائماً
-  if (new URL(event.request.url).origin !== self.location.origin) {
-    return;
-  }
+  if (event.request.method !== 'GET') return;
+  // طلبات الأسعار والشموع تروح للشبكة مباشرة بدون كاش
+  if (new URL(event.request.url).origin !== self.location.origin) return;
 
   event.respondWith(
-    // جرب من الشبكة أولاً
     fetch(event.request)
       .then(response => {
-        // إذا كانت الشبكة جيدة، احفظ في الـ cache
-        if (!response || response.status !== 200 || response.type === 'error') {
-          return response;
-        }
-
-        // احفظ نسخة في الـ cache
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME)
-          .then(cache => {
-            cache.put(event.request, responseToCache);
-          });
-
+        if (!response || response.status !== 200 || response.type === 'error') return response;
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
         return response;
       })
-      .catch(() => {
-        // إذا فشل من الشبكة، جرب من الـ cache
-        return caches.match(event.request)
-          .then(response => {
-            return response || new Response(
-              'Not available offline',
-              { status: 503, statusText: 'Service Unavailable' }
-            );
-          });
-      })
+      .catch(() => caches.match(event.request)
+        .then(r => r || new Response('Not available offline', { status: 503, statusText: 'Service Unavailable' })))
   );
 });
 
 // Handle background sync للتنبيهات
 self.addEventListener('sync', event => {
-  if (event.tag === 'sync-alerts') {
-    event.waitUntil(
-      // يمكن إضافة logic للتنبيهات هنا
-      Promise.resolve()
-    );
-  }
+  if (event.tag === 'sync-alerts') event.waitUntil(Promise.resolve());
 });
 
 // Push notifications
@@ -104,25 +62,16 @@ self.addEventListener('push', event => {
     tag: 'scalping-alert',
     requireInteraction: true
   };
-
-  event.waitUntil(
-    self.registration.showNotification('توصية تداول جديدة', options)
-  );
+  event.waitUntil(self.registration.showNotification('توصية تداول جديدة', options));
 });
 
-// Notification click
+// Notification click: يفتح التطبيق (أو يركّز عليه لو مفتوح)
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(clientList => {
-      for (let client of clientList) {
-        if (client.url === '/' && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow('/');
-      }
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) if ('focus' in c) return c.focus();
+      if (clients.openWindow) return clients.openWindow('/');
     })
   );
 });
