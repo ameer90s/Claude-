@@ -1,32 +1,9 @@
 {
   "name": "scalping-assistant",
-  "version": "2.1.0",
-  "description": "High-Probability Scalping Assistant - PWA for day traders",
+  "version": "3.0.0",
+  "description": "Scalping Assistant 3.0 - PWA scanner for US stocks",
   "main": "index.html",
   "type": "module",
-  "scripts": {
-    "dev": "python -m http.server 8000",
-    "serve": "python -m http.server 3000",
-    "deploy": "vercel",
-    "deploy:prod": "vercel --prod"
-  },
-  "keywords": [
-    "trading",
-    "scalping",
-    "technical-analysis",
-    "pwa",
-    "finnhub",
-    "day-trading",
-    "stock-market"
-  ],
-  "author": "Your Name",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/[username]/scalping-assistant"
-  },
-  "homepage": "https://scalping-assistant.vercel.app",
-  "engines": {
-    "node": ">=14.0.0"
-  }
+  "engines": { "node": ">=18.0.0" },
+  "license": "MIT"
 }
