@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Scalping Assistant 3.0</title>
+<title>Scalping Assistant 3.1</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0a0f1e">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -114,7 +114,7 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--ac);font-size:13px}
 <script>
 (() => {
 'use strict';
-const VER = '3.0 · 2026-10-18';
+const VER = '3.1 · 2026-10-20';
 const $ = id => document.getElementById(id);
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const NOW = () => window.__fakeNow || Date.now();
@@ -127,10 +127,11 @@ const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
 // ===== الإعدادات =====
 const DEF = { alpKey: '', alpSecret: '', fhKey: '', ntfy: '', sound: true, scanOn: true, noEtf: true, theme: 'auto',
-  risk: 10, spread: 20, minPrice: 10, maxPrice: 200, minChg: 3, minRvol: 2, minAvgVolM: 1, minScore: 55, confirmSec: 45,
+  risk: 10, spread: 15, stopMult: 4, minStopC: 15, maxSpread: 20, minPrice: 10, maxPrice: 200, minChg: 3, minRvol: 2, minAvgVolM: 1, minScore: 55, confirmSec: 45,
   winFrom: '09:45', winTo: '11:00', maxRecs: 4, chasePct: 20, stopCap: 35, extPct: 50, noTradeDays: '' };
 let cfg = Object.assign({}, DEF, jget('sa3.cfg', {}));
 (function migrate() {
+  if (!cfg.mig2) { cfg.spread = 15; cfg.mig2 = 1; }
   if (!cfg.fhKey) { const o = jget('tradingAppSettings', {}); if (o && o.finnhubKey) cfg.fhKey = o.finnhubKey; }
   if (!cfg.ntfy) cfg.ntfy = 'scalp-' + Math.random().toString(36).slice(2, 10);
   jset('sa3.cfg', cfg);
@@ -292,6 +293,7 @@ function metrics(sym, sn, np, mins, t0) {
   const c = S.ctx[sym] || {}, all = S.bars[sym] || [], B = all.filter(b => b.t + 60000 <= t0);
   const m = { sym, price: sn.p, bars: B.length, chg: (sn.p - sn.pc) / sn.pc * 100 };
   m.open = all.length ? all[0].o : sn.dO; m.gap = (m.open - sn.pc) / sn.pc * 100; m.chgOpen = (sn.p - m.open) / m.open * 100;
+  { const q = sn.bid > 0 && sn.ask > 0 && sn.ask >= sn.bid ? (sn.ask - sn.bid) * 100 : null; m.spq = q == null ? null : +q.toFixed(1); m.sp = q == null ? cfg.spread : clamp(+q.toFixed(1), 1, 20); }
   m.avgVol = c.avgVol == null ? null : c.avgVol; m.atrD = c.atrD || sn.p * 0.04; m.atrEst = !c.atrD; m.rvol = rvolOf(sym, mins);
   if (B.length < 12) return m;
   const cl = B.map(b => b.c), lo = B.map(b => b.l), hi = B.map(b => b.h);
@@ -311,8 +313,8 @@ function metrics(sym, sn, np, mins, t0) {
   return m;
 }
 function planOf(m) {
-  const tier = m.score >= 72 ? 'strong' : 'medium', Lk = tier === 'strong' ? 5 : 8, sp = cfg.spread / 100;
-  let sl = Math.min(...m.lows.slice(-Lk)) - 0.1 * m.atr1, R = m.price - sl, widened = false; const minStop = 5 * sp;
+  const tier = m.score >= 72 ? 'strong' : 'medium', Lk = tier === 'strong' ? 5 : 8, sp = m.sp / 100;
+  let sl = Math.min(...m.lows.slice(-Lk)) - 0.1 * m.atr1, R = m.price - sl, widened = false; const minStop = Math.max(cfg.stopMult * sp, cfg.minStopC / 100);
   if (!(R >= minStop)) { R = minStop; sl = m.price - R; widened = true; }
   const mult = tier === 'strong' ? [1.5, 2.5, 4] : [1, 2, 3], tps = mult.map(k => m.price + k * R);
   const room = Math.max(0, m.atrD - (m.price - m.dayLow)), reach = Math.min(room, m.atr1 * Math.sqrt(30) * (0.7 + m.score / 100));
@@ -333,6 +335,7 @@ function evaluate(sym, sn, np, mins, t0) {
   A('ema', 'EMA9 صاعد', ok && m.price > m.ema && m.slope > 0, ok ? sgn(m.slope) : '—');
   A('struct', 'قيعان أعلى + قرب القمة', ok && m.hl && m.press, ok ? (m.brk ? 'اختراق' : m.press ? 'ضاغط' : '—') : '—');
   A('ext', 'غير ممتد عن VWAP', ok && (m.price - m.vwap) <= cfg.extPct / 100 * m.atrD, ok ? '$' + f2(m.price - m.vwap) : '—');
+  A('spread', 'سبريد ≤' + cfg.maxSpread + '¢', m.spq == null || m.spq <= cfg.maxSpread, m.spq == null ? '؟' : m.spq + '¢', m.spq == null);
   A('stop', 'الوقف ≤' + cfg.stopCap + '% من المدى', ok && plan.R <= cfg.stopCap / 100 * m.atrD, ok ? '$' + f2(plan.R) : '—');
   A('score', 'زخم ≥' + cfg.minScore, ok && m.score >= cfg.minScore, ok ? m.score : '—');
   A('win', 'نافذة ' + cfg.winFrom + '–' + cfg.winTo, inWin, hmStr(mins));
@@ -412,10 +415,10 @@ async function cycle() {
 
 // ===== إصدار التوصية =====
 function fire(ev, w, sn, np, mins, t0) {
-  const { m, plan: p } = ev, sp = cfg.spread / 100, used = S.recs.filter(r => r.day === np.day && !r.shadow).length;
+  const { m, plan: p } = ev, sp = m.sp / 100, used = S.recs.filter(r => r.day === np.day && !r.shadow).length;
   const rec = { id: np.day + '-' + ev.sym, day: np.day, sym: ev.sym, firedAt: t0, since: w.since, secs: Math.round((t0 - w.since) / 1000), shadow: used >= cfg.maxRecs, late: mins >= 600,
     pattern: m.pattern, tier: p.tier, score: m.score, comp: m.comp, entry: +m.price.toFixed(2), maxBuy: +p.maxBuy.toFixed(2), stop: +p.sl.toFixed(2), R: +p.R.toFixed(3), mult: p.mult, tps: p.tps.map(x => +x.toFixed(2)),
-    recIdx: p.ri, far: p.far, widened: p.widened, reach: +p.reach.toFixed(2), room: +p.room.toFixed(2), spread: cfg.spread, risk: cfg.risk, shares: Math.max(1, Math.floor(cfg.risk / (p.R + sp))),
+    recIdx: p.ri, far: p.far, widened: p.widened, reach: +p.reach.toFixed(2), room: +p.room.toFixed(2), spread: +m.sp.toFixed(1), spreadQ: m.spq, risk: cfg.risk, shares: Math.max(1, Math.floor(cfg.risk / (p.R + sp))),
     quote: { bid: sn.bid || null, ask: sn.ask || null }, news: S.news[ev.sym] ? { flag: S.news[ev.sym].flag, head: S.news[ev.sym].head } : null,
     ctx: { chg: +m.chg.toFixed(2), gap: +m.gap.toFixed(2), rvol: m.rvol == null ? null : +m.rvol.toFixed(2), vwap: +m.vwap.toFixed(2), vwapDist: +(m.price - m.vwap).toFixed(2), slope: +m.slope.toFixed(3), atr1: +m.atr1.toFixed(3), atrD: +m.atrD.toFixed(2), atrEst: m.atrEst, avgVol: m.avgVol == null ? null : Math.round(m.avgVol),
       rs: +m.rs.toFixed(2), spyChg: S.spy ? +S.spy.chg.toFixed(2) : null, spyChgOpen: S.spy ? +S.spy.chgOpen.toFixed(2) : null, dayLow: +m.dayLow.toFixed(2), dayHigh: +m.dayHigh.toFixed(2), hh: +m.hh.toFixed(2), bars: m.bars },
@@ -588,7 +591,7 @@ function renderLog() {
 }
 const FIELDS = [['h', '🔑 مفاتيح البيانات'], ['alpKey', 'Alpaca — API Key ID', 'text'], ['alpSecret', 'Alpaca — Secret Key', 'password'], ['fhKey', 'Finnhub — للأخبار (اختياري، انتقل تلقائياً من النسخة القديمة)', 'password'],
   ['h', '🔔 التنبيهات'], ['ntfy', 'موضوع ntfy — اشترك فيه بتطبيق ntfy على جوالك', 'text'],
-  ['h', '💰 المخاطرة والتكلفة'], ['risk', 'المخاطرة لكل صفقة ($)', 'number'], ['spread', 'سبريد eToro المفترض (سنت) — الوقف لا يقل عن 5× هذا الرقم', 'number'], ['maxRecs', 'أقصى توصيات تنبيه باليوم (الزائدة تُسجَّل كظل)', 'number'], ['chasePct', 'أقصى مطاردة للشراء (% من R)', 'number'],
+  ['h', '💰 المخاطرة والتكلفة'], ['risk', 'المخاطرة لكل صفقة ($)', 'number'], ['spread', 'سبريد افتراضي (سنت) — يُستخدم فقط لما ما يتوفر bid/ask للسهم', 'number'], ['stopMult', 'أدنى وقف = كم × سبريد السهم', 'number'], ['minStopC', 'أدنى وقف مطلق (سنت)', 'number'], ['maxSpread', 'أقصى سبريد مسموح للسهم (سنت) — فوقه يُرفض', 'number'], ['maxRecs', 'أقصى توصيات تنبيه باليوم (الزائدة تُسجَّل كظل)', 'number'], ['chasePct', 'أقصى مطاردة للشراء (% من R)', 'number'],
   ['h', '🔭 شروط الماسح'], ['minPrice', 'أقل سعر ($)', 'number'], ['maxPrice', 'أعلى سعر ($)', 'number'], ['minChg', 'أقل تغير عن إغلاق أمس (%)', 'number'], ['minRvol', 'أقل حجم نسبي (×)', 'number'], ['minAvgVolM', 'أقل متوسط حجم يومي (مليون)', 'number'], ['minScore', 'أقل درجة زخم (0–100)', 'number'], ['confirmSec', 'ثواني تثبيت الشروط قبل التوصية', 'number'], ['stopCap', 'أقصى وقف (% من المدى اليومي)', 'number'], ['extPct', 'أقصى ابتعاد عن VWAP (% من المدى اليومي) — يمنع المطاردة', 'number'], ['winFrom', 'بداية نافذة التوصيات (نيويورك HH:MM)', 'text'], ['winTo', 'نهاية النافذة (نيويورك)', 'text'], ['noTradeDays', 'أيام بدون تداول (YYYY-MM-DD مفصولة بفاصلة)', 'text']];
 function renderSettings() {
   const a = document.activeElement; if (a && a.closest && a.closest('#setv') && /INPUT|SELECT/.test(a.tagName)) return;
@@ -608,7 +611,7 @@ function tickCounters() { const t = NOW(); document.querySelectorAll('.cnt').for
 function recRow(r) {
   const o = outcome(r), A = r.audit, ev = A ? A.ev : r.ev, dd = A ? A.dd : r.dd, c = r.ctx, u = r.user || {}, ts = x => x ? tNY(x) : '';
   return { id: r.id, date: r.day, symbol: r.sym, shadow: r.shadow ? 1 : 0, after10: r.late ? 1 : 0, pattern: r.pattern, tier: r.tier, score: r.score, since_NY: tNY(r.since), since_DXB: tDX(r.since), fired_NY: tNY(r.firedAt), fired_DXB: tDX(r.firedAt), secs_to_fire: r.secs,
-    entry: r.entry, max_buy: r.maxBuy, stop: r.stop, R: r.R, tp1: r.tps[0], tp2: r.tps[1], tp3: r.tps[2], rec_tp: r.recIdx + 1, reach: r.reach, room: r.room, far: r.far ? 1 : 0, widened: r.widened ? 1 : 0, shares: r.shares, spread_assumed: r.spread,
+    entry: r.entry, max_buy: r.maxBuy, stop: r.stop, R: r.R, tp1: r.tps[0], tp2: r.tps[1], tp3: r.tps[2], rec_tp: r.recIdx + 1, reach: r.reach, room: r.room, far: r.far ? 1 : 0, widened: r.widened ? 1 : 0, shares: r.shares, spread_assumed: r.spread, spread_quoted: r.spreadQ ?? '', stop_dist: r.R,
     bid: r.quote.bid, ask: r.quote.ask, chg_pct: c.chg, gap_pct: c.gap, rvol: c.rvol, vwap: c.vwap, vwap_dist: c.vwapDist, ema_slope: c.slope, atr_1m: c.atr1, atr_daily: c.atrD, avg_vol: c.avgVol, rel_strength: c.rs, spy_chg: c.spyChg, spy_chg_open: c.spyChgOpen, day_low: c.dayLow, day_high: c.dayHigh,
     comp_rvol: r.comp.rvol, comp_slope: r.comp.slope, comp_loc: r.comp.loc, comp_rs: r.comp.rs, comp_struct: r.comp.struct, comp_chg: r.comp.chg,
     tp1_at_NY: ts(ev.tp1), tp2_at_NY: ts(ev.tp2), tp3_at_NY: ts(ev.tp3), stop_at_NY: ts(ev.stop), min_before_tp1: dd[1] ?? '', min_before_tp2: dd[2] ?? '', min_before_tp3: dd[3] ?? '',
