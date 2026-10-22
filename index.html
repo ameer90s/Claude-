@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Scalping Assistant 3.1</title>
+<title>Scalping Assistant 3.3</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0a0f1e">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -114,7 +114,7 @@ details{margin:6px 0}summary{cursor:pointer;color:var(--ac);font-size:13px}
 <script>
 (() => {
 'use strict';
-const VER = '3.1 · 2026-10-20';
+const VER = '3.3 · 2026-10-21';
 const $ = id => document.getElementById(id);
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const NOW = () => window.__fakeNow || Date.now();
@@ -127,7 +127,7 @@ const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
 // ===== الإعدادات =====
 const DEF = { alpKey: '', alpSecret: '', fhKey: '', ntfy: '', sound: true, scanOn: true, noEtf: true, theme: 'auto',
-  risk: 10, spread: 15, stopMult: 4, minStopC: 15, maxSpread: 20, minPrice: 10, maxPrice: 200, minChg: 3, minRvol: 2, minAvgVolM: 1, minScore: 55, confirmSec: 45,
+  ghRepo: '', appUrl: '', risk: 10, spread: 15, stopMult: 4, minStopC: 15, maxSpread: 20, minPrice: 10, maxPrice: 200, minChg: 3, minRvol: 2, minAvgVolM: 1, minScore: 55, confirmSec: 45,
   winFrom: '09:45', winTo: '11:00', maxRecs: 4, chasePct: 20, stopCap: 35, extPct: 50, noTradeDays: '' };
 let cfg = Object.assign({}, DEF, jget('sa3.cfg', {}));
 (function migrate() {
@@ -152,7 +152,7 @@ const marketOpen = (np, mins) => isWeekday(np.day) && mins >= 570 && mins < 960;
 
 // ===== الحالة =====
 const S = { uni: [], uniAt: 0, uniSrc: '', snap: {}, bars: {}, ctx: {}, watch: {}, news: {}, day: '', health: {}, status: { msg: '', at: 0, cyc: 0 }, busy: false, proxy: null, spy: null,
-  recs: jget('sa3.recs', []), near: jget('sa3.near', []), nearSeen: {}, log: jget('sa3.scanlog', []), cands: [], auditing: false, fhNext: 0, lastErr: '' };
+  recs: jget('sa3.recs', []), near: jget('sa3.near', []), nearSeen: {}, log: jget('sa3.scanlog', []), gaps: jget('sa3.gaps', []), cands: [], auditing: false, fhNext: 0, lastErr: '' };
 const saveRecs = () => jset('sa3.recs', S.recs.slice(-1500));
 const saveNear = () => jset('sa3.near', S.near.slice(-800));
 const H = (k, ok, msg) => { S.health[k] = { ok, msg: msg || '', at: NOW() }; };
@@ -360,6 +360,9 @@ async function cycle() {
     if (S.day !== np.day) { S.day = np.day; S.ctx = {}; S.bars = {}; S.watch = {}; S.news = {}; S.nearSeen = {}; S.uniAt = 0; S.cands = []; }
     const why = blockReason(np, mins);
     if (why) { S.status = { msg: '⏸ ' + why, at: t0, cyc: S.status.cyc }; return; }
+    { const lt = jget('sa3.tick', 0), o = nyWallToMs(np.day, 9, 30), from = lt >= o ? lt : o, gap = t0 - from;
+      if (gap > 75000 && !S.gapSeen) { S.gaps.push({ day: np.day, from, to: t0, sec: Math.round(gap / 1000), fresh: lt < o ? 1 : 0 }); jset('sa3.gaps', S.gaps.slice(-200)); if (gap > 120000) toast('⚠ الماسح كان متوقف ' + Math.round(gap / 60000) + ' دقيقة' + (lt < o ? ' (من افتتاح السوق)' : '')); }
+      S.gapSeen = true; }
     if (t0 - S.uniAt > 30000) await loadUniverse();
     const openRecs = S.recs.filter(r => r.open && r.day === np.day).map(r => r.sym);
     const sticky = Object.keys(S.watch).filter(s => S.watch[s].keep);
@@ -404,8 +407,8 @@ async function cycle() {
     S.cands = evs.sort((a, b) => (b.all - a.all) || (b.pass - a.pass) || ((b.m.score || 0) - (a.m.score || 0)));
     trackRecs(np, mins, t0);
     S.status = { msg: '🔭 الماسح شغّال', at: t0, cyc: S.status.cyc + 1, uni: S.uni.length, snaps: Object.keys(snaps).length, pre: pre.length };
-    S.log.push({ t: t0, uni: S.uni.length, snaps: Object.keys(snaps).length, pre: pre.length, top: S.cands.slice(0, 5).map(e => e.sym + ':' + e.pass + '/' + e.total) }); jset('sa3.scanlog', S.log.slice(-300));
-    S.lastErr = '';
+    S.log.push({ t: t0, uni: S.uni.length, snaps: Object.keys(snaps).length, pre: pre.length, top: S.cands.slice(0, 5).map(e => e.sym + ':' + e.pass + '/' + e.total) }); jset('sa3.scanlog', S.log.slice(-1500));
+    S.lastErr = ''; jset('sa3.tick', t0); S.gapSeen = false;
   } catch (e) {
     S.lastErr = e.message; H('cycle', false, e.message);
     S.status = { msg: '⚠ ' + (e.status === 429 ? 'تجاوز حد الطلبات — إعادة المحاولة' : e.status === 401 || e.status === 403 ? 'المفاتيح مرفوضة (' + e.status + '): ' + e.message : e.message), at: NOW(), cyc: S.status.cyc };
@@ -505,7 +508,7 @@ function notify(title, body, tag, kind) {
   try { if ('Notification' in window && Notification.permission === 'granted') { const o = { body, tag, vibrate: [200, 100, 200] }; if (navigator.serviceWorker && navigator.serviceWorker.ready) navigator.serviceWorker.ready.then(g => g.showNotification(title, o)).catch(() => new Notification(title, o)); else new Notification(title, o); } } catch (e) {}
   if (cfg.ntfy && !window.__noNet) ntfySend(title, body, kind === 'rec' ? 4 : 3, kind === 'rec' ? 'chart_with_upwards_trend' : 'bell').then(r => H('ntfy', r.ok, 'HTTP ' + r.status)).catch(e => H('ntfy', false, e.message));
 }
-const ntfySend = (title, message, prio, tags) => fetch('https://ntfy.sh/' + encodeURIComponent(cfg.ntfy) + '/publish?' + new URLSearchParams({ title, message, priority: String(prio), tags, click: location.origin }).toString());
+const ntfySend = (title, message, prio, tags) => fetch('https://ntfy.sh/' + encodeURIComponent(cfg.ntfy) + '/publish?' + new URLSearchParams({ title, message, priority: String(prio), tags, click: cfg.appUrl || location.origin }).toString());
 let toastT = null;
 function toast(m) { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => { t.style.display = 'none'; }, 6000); }
 
@@ -520,9 +523,11 @@ function renderHead() {
 }
 function readiness() {
   const t = NOW(), np = nyParts(t), mins = np.h * 60 + np.mi, op = marketOpen(np, mins), n = S.recs.filter(r => r.day === np.day && !r.shadow).length, hh = k => S.health[k] ? S.health[k].ok : null;
-  return [['مفاتيح Alpaca', !!(cfg.alpKey && cfg.alpSecret)], ['اتصال البيانات (لقطات الأسعار)', hh('snap')], ['الماسح العام للسوق', hh('movers') === null ? null : hh('movers') || hh('actives')], ['خط أساس الحجم (شموع تاريخية)', hh('hist5')],
+  const R = [['مفاتيح Alpaca', !!(cfg.alpKey && cfg.alpSecret)], ['اتصال البيانات (لقطات الأسعار)', hh('snap')], ['الماسح العام للسوق', hh('movers') === null ? null : hh('movers') || hh('actives')], ['خط أساس الحجم (شموع تاريخية)', hh('hist5')],
     ['السوق مفتوح', op], ['داخل نافذة التوصيات ' + cfg.winFrom + '–' + cfg.winTo, op && mins >= hmv(cfg.winFrom) && mins < hmv(cfg.winTo)], ['تنبيه الجوال (ntfy)', !!cfg.ntfy], ['الأخبار (Finnhub)', cfg.fhKey ? (hh('news') === null ? null : hh('news')) : false],
-    ['توصيات اليوم ' + n + '/' + cfg.maxRecs, n < cfg.maxRecs], ['الماسح مفعّل على هذا الجهاز', cfg.scanOn]];
+    ['توصيات اليوم ' + n + '/' + cfg.maxRecs, n < cfg.maxRecs], ['الماسح مفعّل على هذا الجهاز', cfg.scanOn], ['الشاشة ثابتة (منع القفل التلقائي)', 'wakeLock' in navigator ? !!wl : false]];
+  if (cfg.ghRepo) R.push(['☁️ السيرفر' + (S.server && S.server.at ? ' (آخر حفظ قبل ' + Math.max(0, Math.round((NOW() - S.server.at) / 60000)) + ' د)' : ' (لم يُحمَّل بعد)'), S.server && S.server.at ? (op ? NOW() - S.server.at < 15 * 60000 : null) : null]);
+  return R;
 }
 function renderPrices() {
   const s = S.status, r = readiness();
@@ -591,6 +596,7 @@ function renderLog() {
 }
 const FIELDS = [['h', '🔑 مفاتيح البيانات'], ['alpKey', 'Alpaca — API Key ID', 'text'], ['alpSecret', 'Alpaca — Secret Key', 'password'], ['fhKey', 'Finnhub — للأخبار (اختياري، انتقل تلقائياً من النسخة القديمة)', 'password'],
   ['h', '🔔 التنبيهات'], ['ntfy', 'موضوع ntfy — اشترك فيه بتطبيق ntfy على جوالك', 'text'],
+  ['h', '☁️ السيرفر (GitHub Actions)'], ['ghRepo', 'مستودع GitHub بصيغة user/repo — لتحميل نتائج السيرفر (إذا السيرفر شغّال أطفئ تشغيل الماسح على هذا الجهاز)', 'text'],
   ['h', '💰 المخاطرة والتكلفة'], ['risk', 'المخاطرة لكل صفقة ($)', 'number'], ['spread', 'سبريد افتراضي (سنت) — يُستخدم فقط لما ما يتوفر bid/ask للسهم', 'number'], ['stopMult', 'أدنى وقف = كم × سبريد السهم', 'number'], ['minStopC', 'أدنى وقف مطلق (سنت)', 'number'], ['maxSpread', 'أقصى سبريد مسموح للسهم (سنت) — فوقه يُرفض', 'number'], ['maxRecs', 'أقصى توصيات تنبيه باليوم (الزائدة تُسجَّل كظل)', 'number'], ['chasePct', 'أقصى مطاردة للشراء (% من R)', 'number'],
   ['h', '🔭 شروط الماسح'], ['minPrice', 'أقل سعر ($)', 'number'], ['maxPrice', 'أعلى سعر ($)', 'number'], ['minChg', 'أقل تغير عن إغلاق أمس (%)', 'number'], ['minRvol', 'أقل حجم نسبي (×)', 'number'], ['minAvgVolM', 'أقل متوسط حجم يومي (مليون)', 'number'], ['minScore', 'أقل درجة زخم (0–100)', 'number'], ['confirmSec', 'ثواني تثبيت الشروط قبل التوصية', 'number'], ['stopCap', 'أقصى وقف (% من المدى اليومي)', 'number'], ['extPct', 'أقصى ابتعاد عن VWAP (% من المدى اليومي) — يمنع المطاردة', 'number'], ['winFrom', 'بداية نافذة التوصيات (نيويورك HH:MM)', 'text'], ['winTo', 'نهاية النافذة (نيويورك)', 'text'], ['noTradeDays', 'أيام بدون تداول (YYYY-MM-DD مفصولة بفاصلة)', 'text']];
 function renderSettings() {
@@ -599,7 +605,7 @@ function renderSettings() {
   h += '<div class="card">' + FIELDS.map(f => f[0] === 'h' ? `<h3 style="margin:14px 0 4px">${f[1]}</h3>` : `<label class="f">${f[1]}</label><input class="in" id="f_${f[0]}" type="${f[2]}" value="${esc(cfg[f[0]])}" ${f[2] === 'number' ? 'step="any"' : 'dir="ltr"'}>`).join('');
   h += `<div class="sw"><span>تشغيل الماسح على هذا الجهاز (شغّله على جهاز واحد فقط)</span><input type="checkbox" id="f_scanOn" ${cfg.scanOn ? 'checked' : ''}></div><div class="sw"><span>الصوت</span><input type="checkbox" id="f_sound" ${cfg.sound ? 'checked' : ''}></div><div class="sw"><span>استبعاد صناديق ETF</span><input type="checkbox" id="f_noEtf" ${cfg.noEtf ? 'checked' : ''}></div>
     <label class="f">المظهر</label><select class="in" id="f_theme"><option value="auto">تلقائي</option><option value="dark">داكن</option><option value="light">فاتح</option></select>
-    <div class="row" style="margin-top:12px"><button class="btn" onclick="SA.save()">💾 حفظ</button><button class="btn sec" onclick="SA.test()">🔌 اختبار الاتصال</button><button class="btn sec" onclick="SA.perm()">🔔 تفعيل إشعارات المتصفح والصوت</button></div><div id="testOut" class="sm" style="margin-top:10px;line-height:1.9"></div></div>`;
+    <div class="row" style="margin-top:12px"><button class="btn" onclick="SA.save()">💾 حفظ</button><button class="btn sec" onclick="SA.test()">🔌 اختبار الاتصال</button><button class="btn sec" onclick="SA.perm()">🔔 تفعيل إشعارات المتصفح والصوت</button><button class="btn sec" onclick="SA.sync()">☁️ تحميل من السيرفر</button></div><div id="testOut" class="sm" style="margin-top:10px;line-height:1.9"></div></div>`;
   h += `<div class="card"><h3>ℹ️ طريقة التنبيه على الجوال</h3><div class="sm mut" style="line-height:1.9">1) نزّل تطبيق <b>ntfy</b> على الجوال (مجاني).<br>2) اضغط + واشترك في الموضوع: <b class="ltr">${esc(cfg.ntfy)}</b><br>3) كل توصية (وكل هدف أو وقف) توصلك إشعار حتى لو الجوال مقفل. الماسح لازم يكون شغّال على التابلت والصفحة مفتوحة.</div></div>
     <div class="card"><h3>🧹 بيانات</h3><div class="row"><button class="btn sec" onclick="SA.clearDay()">مسح كاش اليوم</button><button class="btn red" onclick="SA.wipe()">حذف كل السجل</button></div></div>`;
   $('setv').innerHTML = h; $('f_theme').value = cfg.theme;
@@ -621,7 +627,7 @@ function recRow(r) {
 function download(name, text, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
 function exportCSV() { if (!S.recs.length) return toast('لا توصيات للتصدير'); const rows = S.recs.map(recRow), cols = Object.keys(rows[0]); const q = v => { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
   download('scalping-recs-' + nyParts(NOW()).day + '.csv', '﻿' + cols.join(',') + '\n' + rows.map(r => cols.map(c => q(r[c])).join(',')).join('\n'), 'text/csv'); }
-function exportJSON() { download('scalping-full-' + nyParts(NOW()).day + '.json', JSON.stringify({ app: VER, at: new Date(NOW()).toISOString(), cfg: Object.assign({}, cfg, { alpKey: '', alpSecret: '', fhKey: '' }), recs: S.recs, near: S.near, scanlog: S.log }, null, 1), 'application/json'); }
+function exportJSON() { download('scalping-full-' + nyParts(NOW()).day + '.json', JSON.stringify({ app: VER, at: new Date(NOW()).toISOString(), cfg: Object.assign({}, cfg, { alpKey: '', alpSecret: '', fhKey: '' }), recs: S.recs, near: S.near, gaps: S.gaps, scanlog: S.log }, null, 1), 'application/json'); }
 
 // ===== واجهة =====
 async function testConn() {
@@ -647,11 +653,38 @@ function setTab(t) { document.querySelectorAll('nav.tabs button').forEach(b => b
 document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.t)));
 
 window.SA = { cfg, S, cycle, evaluate, planOf, metrics, outcome, replay, auditDay, maybeAudit, renderAll, fire, nyParts, nyWallToMs, recRow, stats,
-  save, test: testConn, csv: exportCSV, json: exportJSON, theme() { cfg.theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; saveCfg(); applyTheme(); },
+  save, test: testConn, sync: () => syncServer(true), csv: exportCSV, json: exportJSON, theme() { cfg.theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; saveCfg(); applyTheme(); },
   uf(id, f, v) { const r = S.recs.find(x => x.id === id); if (!r) return; r.user = r.user || {}; r.user[f] = f === 'note' ? v : f === 'executed' ? v : (v === '' ? null : parseFloat(v)); saveRecs(); },
   perm() { if ('Notification' in window) Notification.requestPermission().then(p => toast(p === 'granted' ? '✅ الإشعارات مفعّلة' : 'لم تُفعَّل')); beep('rec'); },
   clearDay() { S.ctx = {}; S.bars = {}; S.watch = {}; S.news = {}; S.uniAt = 0; toast('تم مسح كاش اليوم'); },
   wipe() { if (confirm('حذف كل التوصيات والسجل؟ (صدّر أول لو تبي نسخة)')) { S.recs = []; S.near = []; S.log = []; saveRecs(); saveNear(); jset('sa3.scanlog', []); renderAll(); } } };
+
+// ===== مزامنة نتائج السيرفر (GitHub raw) =====
+function mergeServer(js) {
+  const byId = new Map(S.recs.map(r => [r.id, r]));
+  for (const x of (js.recs || [])) {
+    const l = byId.get(x.id);
+    if (!l) { byId.set(x.id, x); continue; }
+    if ((x.lastBar || 0) > (l.lastBar || 0) || (x.audit && !l.audit) || (!x.open && l.open)) byId.set(x.id, Object.assign({}, x, { user: Object.assign({}, x.user, l.user) }));
+  }
+  S.recs = [...byId.values()].sort((a, b) => a.firedAt - b.firedAt);
+  const nk = n => n.day + '|' + n.sym, nm = new Map(S.near.map(n => [nk(n), n]));
+  for (const x of (js.near || [])) { const l = nm.get(nk(x)); if (!l || (x.fwd && !l.fwd) || (!l.fwd && x.t > l.t)) nm.set(nk(x), x); }
+  S.near = [...nm.values()].sort((a, b) => a.t - b.t);
+  const gm = new Map(S.gaps.map(g => [g.from + '|' + g.to, g])); for (const g of (js.gaps || [])) gm.set(g.from + '|' + g.to, g); S.gaps = [...gm.values()].sort((a, b) => a.from - b.from).slice(-200);
+  const lm = new Map(S.log.map(l => [l.t, l])); for (const l of (js.scanlog || [])) lm.set(l.t, l); S.log = [...lm.values()].sort((a, b) => a.t - b.t).slice(-1500);
+  saveRecs(); saveNear(); jset('sa3.gaps', S.gaps); jset('sa3.scanlog', S.log);
+}
+async function syncServer(manual) {
+  const repo = (cfg.ghRepo || '').trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').replace(/\/$/, '');
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) { if (manual) toast('اكتب المستودع بصيغة user/repo في الإعدادات ثم احفظ'); return; }
+  try {
+    const r = await fetch('https://raw.githubusercontent.com/' + repo + '/data/state.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status === 404 ? 'ما لقيت ملف النتائج (شغّل السيرفر مرة أولى، أو تأكد من اسم المستودع)' : 'HTTP ' + r.status);
+    const js = await r.json(); mergeServer(js); S.server = js.server || {};
+    H('sync', true, ''); if (manual) toast('☁️ تم التحميل: ' + (js.recs || []).length + ' توصية في سجل السيرفر'); renderAll();
+  } catch (e) { H('sync', false, e.message); if (manual) toast('☁️ تعذر التحميل: ' + e.message); }
+}
 
 // ===== التشغيل =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -659,9 +692,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator && !window.__noLoop) navigator.serviceWorker.register('/sw.js').catch(() => {});
   setInterval(() => { renderHead(); tickCounters(); }, 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { keepAwake(); renderAll(); } });
+  document.addEventListener('pointerdown', () => { keepAwake(); }, { passive: true });
+  syncServer(false); setInterval(() => { if (!document.hidden) syncServer(false); }, 90000);
   if (!window.__noLoop) (async function loop() { for (;;) { const np = nyParts(NOW()), mins = np.h * 60 + np.mi; try { if (cfg.scanOn) { keepAwake(); await cycle(); } } catch (e) {} try { await maybeAudit(); } catch (e) {} await wait(marketOpen(np, mins) ? 15000 : 60000); } })();
 });
-let wl = null; async function keepAwake() { try { if ('wakeLock' in navigator && !wl && !document.hidden) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; }); } } catch (e) {} }
+let wl = null; async function keepAwake() { try { if ('wakeLock' in navigator && !wl && !document.hidden) { wl = await navigator.wakeLock.request('screen'); wl.addEventListener('release', () => { wl = null; if (typeof renderAll === 'function') renderAll(); }); } } catch (e) {} }
 })();
 </script>
 </body>

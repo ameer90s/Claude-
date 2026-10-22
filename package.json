@@ -1,6 +1,6 @@
 {
   "name": "scalping-assistant",
-  "version": "3.0.0",
+  "version": "3.2.0",
   "description": "Scalping Assistant 3.0 - PWA scanner for US stocks",
   "main": "index.html",
   "type": "module",
