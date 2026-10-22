@@ -1,1 +1,87 @@
+name: scanner
 
+on:
+  schedule:
+    - cron: '30 12 * * 1-5'
+    - cron: '5 18 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      max_min:
+        description: 'Max minutes (use 5 for a test)'
+        default: '330'
+      until_ny:
+        description: 'Stop at NY time HH:MM (leave empty for a test)'
+        default: ''
+
+concurrency:
+  group: scanner
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Prepare data branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          URL="https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          if git ls-remote --exit-code --heads "$URL" data >/dev/null 2>&1; then
+            git clone --depth 1 --branch data "$URL" dbranch
+          else
+            mkdir dbranch
+            cd dbranch
+            git init -q -b data
+            git remote add origin "$URL"
+          fi
+
+      - name: Install browser
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.49.1
+          npx playwright install --with-deps chromium
+
+      - name: Run scanner
+        env:
+          ALPACA_KEY: ${{ secrets.ALPACA_KEY }}
+          ALPACA_SECRET: ${{ secrets.ALPACA_SECRET }}
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          APP_URL: ${{ vars.APP_URL }}
+          SCANNER_CFG: ${{ vars.SCANNER_CFG }}
+          PUSH: '1'
+          SCHEDULE: ${{ github.event.schedule }}
+          IN_MAX: ${{ github.event.inputs.max_min }}
+          IN_UNTIL: ${{ github.event.inputs.until_ny }}
+        run: |
+          if [ "$SCHEDULE" = "5 18 * * 1-5" ]; then
+            export MAX_MIN=300
+            export UNTIL_NY=16:30
+          else
+            export MAX_MIN="${IN_MAX:-330}"
+            export UNTIL_NY="$IN_UNTIL"
+          fi
+          node scanner.cjs
+
+      - name: Backup results
+        if: always()
+        run: |
+          cd dbranch
+          if [ -f state.json ]; then
+            git add state.json
+            if ! git diff --cached --quiet; then
+              if git rev-parse HEAD >/dev/null 2>&1; then AMEND="--amend"; else AMEND=""; fi
+              git -c user.name=scanner-bot -c user.email=scanner-bot@users.noreply.github.com commit $AMEND -m "state backup [skip ci] [vercel skip]"
+              git push --force origin HEAD:data || true
+            fi
+          fi
